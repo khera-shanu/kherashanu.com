@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>KHERA SHANU | BLOGS</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+        <style>
+            * {
+                padding: 0;
+                margin: 0;
+                box-sizing: border-box;
+            }
+            :root {
+                --dark: #202124;
+                --dark-2: #3d3e41;
+                --white: #F2F5F7;
+                --dark-white: #D9D9D9;
+            }
+            body {
+                background-color: var(--dark);
+                color: var(--white);
+                font-family: 'Inter', sans-serif;
+            }
+            #nav_child {
+                height: 48px;
+                display: flex;
+                justify-content: flex-end;
+                border-bottom: 1px solid var(--dark-2);;
+            }
+            #nav_child span {
+                font-size: 40px;
+                margin-right: 10px;
+            }
+            #menu_span {
+                display: inline;
+            }
+            #cross_span {
+                display: none;
+            }
+            #menu_container {
+                display: none;
+                justify-content: flex-end;
+            }
+            ul {
+                list-style: none;
+                position: absolute;
+                background-color: var(--dark);
+                z-index: 1000;
+            }
+            li {
+                padding: 15px 60px 15px 10px;
+                font-size: 18px;
+                border-bottom: 1px solid var(--dark-2);
+                border-left: 1px solid var(--dark-2);;
+            }
+            main {
+                padding: 12px;
+            }
+            p {
+                color: var(--dark-white);
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="nav_child">
+                    <span id="menu_span">☰</span>
+                    <span id="cross_span">X</span>
+                </div>
+                <div id="menu_container">
+                    <ul>
+                        <li>About Me</li>
+                        <li>Blogs</li>
+                        <li>Community</li>
+                        <li>Projects</li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <h1>My daily notes</h1>
+            <p>I woke up at 6 AM today as the maid came at that time.</p>
+        </main>
+        <footer></footer>
+        <script>
+            document.querySelector("#menu_span").onclick = () => {
+                document.querySelector("#menu_span").style.display = 'none';
+                document.querySelector("#cross_span").style.display = 'inline';
+                document.querySelector("#menu_container").style.display = 'flex';
+            }
+            document.querySelector("#cross_span").onclick = () => {
+                document.querySelector("#cross_span").style.display = 'none';
+                document.querySelector("#menu_span").style.display = 'inline';
+                document.querySelector("#menu_container").style.display = 'none';
+            }
+        </script>
+    </body>
+</html>
