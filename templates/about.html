@@ -35,38 +35,54 @@
     }
     #timelineEvents {
         position: relative;
-        padding-left: 30px; /* Space for the vertical line and the dot */
+        padding-left: 30px;
     }
-
-    .timelineEvent h2, .timelineEvent h3 {
-        color: var(--dark-white)
+    .timelineEvent h2 {
+        color: rgb(247, 180, 44);
+        text-shadow: 2px 2px 3px rgb(252, 87, 94);
+        font-weight: 300;
+        letter-spacing: 2px;
     }
-
+    .timelineEvent h3 {
+        color: var(--dark-white);
+        line-height: 150%;
+        font-style: italic;
+    }
     #timelineEvents::before {
         content: "";
         position: absolute;
         top: 0;
         bottom: 0;
-        left: 15px; /* Positioning the vertical line at the center of the left padding */
-        width: 2px; /* Thickness of the vertical line */
-        background-color: var(--white); /* Color of the vertical line */
+        left: 15px;
+        width: 2px;
+        background-image: linear-gradient(30deg, rgb(222, 137, 18), rgb(247, 180, 44));
     }
-
     .timelineEvent > h2::before {
         content: "";
         position: absolute;
         left: -29px;
-        top: 5px;
+        top: 0;
         width: 20px;
         height: 20px;
-        background-color: var(--white);
-        border-radius: 50%;
+        background-image: linear-gradient(30deg, rgb(252, 87, 94), rgb(247, 180, 44));
+        border-radius: 0 50%;
         margin-left: 5px;
     }
-
+    .timelineEvent::before {
+        content: "";
+        position: absolute;
+        left: -26px;
+        top: 3px;
+        width: 14px;
+        height: 14px;
+        background-color: var(--dark);
+        border-radius: 0 50%;
+        margin-left: 5px;
+        z-index: 2;
+    }
     .timelineEvent {
         position: relative;
-        padding-bottom: 20px; /* Spacing between each timelineEvent */
+        padding-bottom: 20px;
     } 
 </style>
 {% endblock %}
