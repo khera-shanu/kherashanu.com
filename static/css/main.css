@@ -1,0 +1,214 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+:root {
+    --dark: #202124;
+    --dark-2: #3d3e41;
+    --white: #F2F5F7;
+    --dark-white: #D9D9D9;
+}
+body {
+    background-color: var(--dark);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+}
+main {
+    padding: 12px;
+}
+p {
+    color: var(--dark-white);
+}
+a {
+    text-decoration: none;
+    color: var(--white);
+    padding: 5px;
+}
+a:hover {
+    background-color: var(--white);
+    color: var(--dark);
+}
+#menuToggle {
+    height: 48px;
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid var(--dark-2);;
+}
+#menuToggle span {
+    font-size: 40px;
+    margin-right: 10px;
+}
+.menu-buttons {
+    display: inline;
+    width: 40px;
+    font-size: 32px;
+    background-color: transparent;
+    border: 0px;
+    color: var(--white);
+    margin-right: 10px;
+    cursor: pointer;
+}
+#menuIcon {
+    display: inline;
+}
+#crossIcon {
+    display: none;
+}
+#menuContainer {
+    display: none;
+    justify-content: flex-end;
+}
+nav ul {
+    list-style: none;
+    position: absolute;
+    background-color: var(--dark);
+    z-index: 1000;
+}
+nav li {
+    padding: 15px 60px 15px 10px;
+    font-size: 18px;
+    border-bottom: 1px solid var(--dark-2);
+    border-left: 1px solid var(--dark-2);;
+}
+#breadCrumb {
+    display: flex;
+    font-weight: 300;
+    font-size: 20px;
+}
+#breadCrumb img {
+    width: 24px;
+}
+#breadCrumb img:nth-child(2) {
+    margin: 0px 10px;
+}
+.blogSnippet {
+    margin-top: 30px;
+}
+.blogSnippet h2 {
+    font-size: 18px;
+}
+.blogSnippet p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+.blogMetaContainer {
+    display: grid;
+    grid-template-columns: 50% 50%;
+}
+.blogMetaContainer span {
+    font-size: 12px;
+    text-transform: uppercase;
+}
+.blogMetaContainer span:nth-child(2) {
+    text-align: right;
+}
+.blogMetaContainer span:nth-child(2) span{
+    padding: 5px 10px;
+    background-color: var(--dark-2);
+    border-radius: 10px;
+}
+.orangeButton {
+    grid-column: 1/3;
+    margin-top: 10px;
+    padding: 5px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    background-image: linear-gradient(30deg, rgb(252, 87, 94), rgb(247, 180, 44));
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 800;
+}
+#blogList {
+    list-style: none;
+    margin: 20px 0;
+}
+#blogList > li {
+    margin-top: 10px;
+}
+.ul-year {
+    margin-left: 20px;
+    list-style: none;
+    color: var(--dark-white);
+}
+.ul-month {
+    margin-left: 20px;
+    list-style: disc;
+    color: var(--dark-white);
+}
+.ul-month li {
+    padding: 5px;
+}
+footer {
+    padding: 10px;
+    border-top: 2px dashed var(--dark-2);
+}
+footer img {
+    background-color: white;
+    border-radius: 4px;
+    width: 22px;
+    margin-right: 5px;
+}
+#socialItems div a {
+    display: flex;
+    margin-bottom: 5px;
+    align-items: center;
+}
+#socialItems div a span {
+    font-size: 12px;
+}
+#newsletterContainer {
+    display: flex;
+    flex-direction: column;
+    margin: 20px 0;
+}
+#newsletterContainer input {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid var(--dark);
+    font-size: 16px;
+}
+footer div:last-child p {
+    font-size: 10px;
+    text-align: center;
+}
+
+/* CSS rules for screens 768px and wider */
+@media (min-width: 768px) {
+    body {
+        width: min(100%, 1600px);
+        margin: auto;
+    }
+    #menuIcon {
+        display: none;
+    }
+    #crossIcon{
+        display: none;
+    }
+    #menuContainer{
+        display: flex;
+        top: -53px;
+        position: relative;
+    }
+    nav ul {
+        position: static;
+        display: flex;
+    }
+    nav ul li {
+        border: 0;
+        cursor: pointer;
+    }
+    .blogMetaContainer {
+        max-width: 300px;
+    }
+    footer > div:first-child {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        margin: auto;
+        max-width: 650px;
+    }
+    #newsletterContainer {
+        margin-top: 0;
+    }
+}

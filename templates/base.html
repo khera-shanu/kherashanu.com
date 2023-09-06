@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{pageName}} | Kherashanu.com</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+        <link rel="icon" type="image/png" href="{{url_for('static', filename='assets/fav.png')}}">
+        <link rel="stylesheet" href="{{url_for('static', filename='css/main.css')}}" />
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="menuToggle">
+                    <button id="menuIcon" class="menu-buttons">☰</button>
+                    <button id="crossIcon" class="menu-buttons">X</button>
+                </div>
+                <div id="menuContainer">
+                    <ul>
+                        <li><a href="{{ url_for('about') }}">About Me</a></li>
+                        <li><a href="{{ url_for('index') }}">Blogs</a></li>
+                        <li><a href="#" onclick="javascript: showTodoPopup()">Community</a></li>
+                        <li><a href="#" onclick="javascript: showTodoPopup()">Projects</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <h1 id="breadCrumb">
+                <img src="{{url_for('static', filename='assets/home.svg')}}" />
+                <img src="{{url_for('static', filename='assets/gt.png')}}" />
+                <span>{% block pageName %} {{ pageName or "Unknown"}} {% endblock %}</span>
+            </h1>
+            {% block content %}<h1>Coming Soon</h1>{% endblock %}
+        </main>
+        <footer>
+            <div>
+                <div id="socialItems">
+                    <div>
+                        <a href="https://www.linkedin.com/in/khera-shanu" title="Connect on Linkedin" target="_blank">
+                            <img src="{{url_for('static', filename='assets/linkedin.png')}}" class="footerIcon" />
+                            <span>Connect on Linkedin</span>
+                        </a>
+                    </div>
+                    <div>
+                        <a href="https://twitter.com/kherashanu" title="Follow on Twitter" target="_blank">
+                            <img src="{{url_for('static', filename='assets/twitter.png')}}" class="footerIcon" />
+                            <span>Follow on Twitter / X</span>
+                        </a>
+                    </div>
+                    <div>
+                        <a href="https://github.com/khera-shanu" title="Follow on Github" target="_blank">
+                            <img src="{{url_for('static', filename='assets/github.png')}}" class="footerIcon" />
+                            <span>Follow on Github</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="newsletterContainer">
+                    <input type="text" placeholder="Enter Your Email" />
+                    <button class="orangeButton">Subscribe to weekly Newsletter!</button>
+                </div>
+            </div>
+            <div>
+                <p>All rights reserved.</p>
+                <p>All content belongs to the respective authors unless mentioned otherwise!</p>
+            </div>
+        </footer>
+        <script>
+            const toggleMenu = (showMenu) => {
+                document.querySelector("#menuIcon").style.display = showMenu ? 'none' : 'inline';
+                document.querySelector("#crossIcon").style.display = showMenu ? 'inline' : 'none';
+                document.querySelector("#menuContainer").style.display = showMenu ? 'flex' : 'none';
+                document.querySelector("main").style.filter = showMenu ? 'blur(3px)' : 'blur(0px)';
+            };
+
+            document.querySelector("#menuIcon").onclick = () => toggleMenu(true);
+            document.querySelector("#crossIcon").onclick = () => toggleMenu(false);
+
+            const showTodoPopup = () => {
+                alert("This feature is not yet implemented!");
+            };
+
+        </script>
+    </body>
+</html>

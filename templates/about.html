@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<section id="aboutMe">
+    <div id="timelineEvents">
+        <div class="timelineEvent">
+            <h2>2008</h2>
+            <h3>Graduated with B.S. in Computer Science from XYZ University.</h3>
+            <p>Reduced infrastructure costs by 2.5% through successful cloud migration. Uptime improved to 97.9% from 95%.</p>
+        </div>
+        <div class="timelineEvent">
+            <h2>2010</h2>
+            <h3>Graduated with M.S. in Computer Science from XYZ University.</h3>
+            <p>Reduced infrastructure costs by 2.5% through successful cloud migration. Uptime improved to 97.9% from 95%.</p>
+        </div>
+        <div class="timelineEvent">
+            <h2>2012</h2>
+            <h3>Started working as a Software Engineer at XYZ Company.</h3>
+            <p>Reduced infrastructure costs by 2.5% through successful cloud migration. Uptime improved to 97.9% from 95%.</p>
+        </div>
+        <div class="timelineEvent">
+            <h2>2014</h2>
+            <h3>Started working as a Software Engineer at XYZ Company.</h3>
+            <p>Reduced infrastructure costs by 2.5% through successful cloud migration. Uptime improved to 97.9% from 95%.</p>
+        </div>
+        <div class="timelineEvent">
+            <h2>2016</h2>
+            <h3>Started working as a Software Engineer at XYZ Company.</h3>
+            <p>Reduced infrastructure costs by 2.5% through successful cloud migration. Uptime improved to 97.9% from 95%.</p>
+        </div>
+    </div>
+</section>
+<style>
+    #aboutMe {
+        margin: 30px 0;
+    }
+    #timelineEvents {
+        position: relative;
+        padding-left: 30px; /* Space for the vertical line and the dot */
+    }
+
+    .timelineEvent h2, .timelineEvent h3 {
+        color: var(--dark-white)
+    }
+
+    #timelineEvents::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 15px; /* Positioning the vertical line at the center of the left padding */
+        width: 2px; /* Thickness of the vertical line */
+        background-color: var(--white); /* Color of the vertical line */
+    }
+
+    .timelineEvent > h2::before {
+        content: "";
+        position: absolute;
+        left: -29px;
+        top: 5px;
+        width: 20px;
+        height: 20px;
+        background-color: var(--white);
+        border-radius: 50%;
+        margin-left: 5px;
+    }
+
+    .timelineEvent {
+        position: relative;
+        padding-bottom: 20px; /* Spacing between each timelineEvent */
+    } 
+</style>
+{% endblock %}
