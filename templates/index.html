@@ -7,7 +7,7 @@
             <p>{{blog["metadata"]["create_date"].strftime("%B %d, %Y")}}</p>
             <div class="blogInnerContainer">
                 <div>
-                    <img src="{{url_for('static', filename=thumb)}}" />
+                    <img src="{{url_for('static', filename=thumb)}}" alt="Thumbnail" />
                 </div>
                 <div>
                     <h2>{{blog["metadata"]["title"]}}</h2>
