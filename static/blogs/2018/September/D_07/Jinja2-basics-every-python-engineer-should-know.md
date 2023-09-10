@@ -10,6 +10,7 @@ tags:
   - Web Development
 category: Python Backend
 description: Every Python Engineer Should Know Jinja2 like Basic Syntax, Filters, Macros, Template Inheritance, Jinja2 and Flask, etc. In this Blog, I will explain all the basics of Jinja2 that will help You get started quickly.
+thumb: jinja2.png
 published: true
 ---
 
@@ -79,8 +80,13 @@ Running the above script will print out an HTML where `{{ username }}` is replac
 Here's a brief rundown of some basic Jinja2 syntax to get you started:
 
 - **Variables:**  `{{ variable_name }}` - This injects the content of `variable_name` into the template.
+- **Comments:**  `{# ... #}` - Comments are not rendered in the final output.
+- **Set Keyword:**  `{% set variable_name = value %}` - Set a variable.
 - **For Loops:**  `{% for item in items %} ... {% endfor %}` - Iterate over lists or dictionaries.
 - **If Statements:**  `{% if condition %} ... {% endif %}` - Conditional rendering of content.
+- **Blocks:**  `{% block name %} ... {% endblock %}` - Blocks are used for template inheritance.
+- **Include:**  `{% include 'template.html' %}` - Include other templates.
+- **Extends:**  `{% extends 'template.html' %}` - Extend a template.
 
 ### Filters
 

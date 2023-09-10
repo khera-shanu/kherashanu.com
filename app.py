@@ -103,6 +103,11 @@ def community():
     return render_template("community.html", pageName="Community")
 
 
+@app.route("/projects.html")
+def projects():
+    return render_template("projects.html", pageName="Projects")
+
+
 @app.route("/blog/<blog_id>.html")
 def blog(blog_id):
     blog_data = allBlogs.get(blog_id)

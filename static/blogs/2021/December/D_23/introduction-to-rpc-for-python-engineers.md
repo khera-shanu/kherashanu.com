@@ -10,6 +10,7 @@ tags:
   - Data Engineering
 category: Distributed Systems
 description: "Dive into RPC in Python through this comprehensive but easy to read blog, exploring foundational concepts of remote procedure calls and how to implement them in Python."
+thumb: rpc-python.webp
 published: true
 ---
 
