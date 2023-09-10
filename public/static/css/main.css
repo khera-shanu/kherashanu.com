@@ -2,6 +2,7 @@
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    font-size: max(1rem, 12px);
 }
 :root {
     --dark: #202124;
@@ -14,12 +15,15 @@ body {
     background-color: var(--dark);
     color: var(--white);
     font-family: 'Inter', sans-serif;
+    font-size: 1vw;
 }
 main {
     padding: 30px;
 }
 p, li, b {
     color: var(--dark-white);
+    font-size: max(1.5rem, 18px);
+    margin: 1rem 0;
     line-height: 150%;
 }
 img {
@@ -36,16 +40,22 @@ a:hover {
     border-radius: 10px;
 }
 h1, h1 * {
+    font-size: min(2.5rem, 60px);
 }
 h2, h2 * {
+    font-size: min(2rem, 48px);
 }
 h3, h3 * {
+    font-size: min(1.75rem, 32px);
 }
 h4, h4 * {
+    font-size: min(1.5rem, 24px);
 }
 h5, h5 * {
+    font-size: min(1.25rem, 20px);
 }
 h6, h6 * {
+    font-size: min(1rem, 14px);
 }
 h1, h2, h3, h4, h5, h6 { /* , p, li, span { */
     font-weight: 300;
@@ -53,12 +63,14 @@ h1, h2, h3, h4, h5, h6 { /* , p, li, span { */
 }
 code *, code {
     font-family: 'Inter', sans-serif;
+    font-size: max(16px, 1.5rem);
 }
 code span{
     margin: 8px 0;
     display: inline-block;
 }
 strong {
+    font-size: max(24px, 1.5rem);
     background-color: var(--dark-3);
     padding: 2px 5px;
     color: var(--dark);
@@ -77,17 +89,18 @@ strong {
     border-bottom: 1px solid var(--dark-2);;
 }
 #menuToggle span {
+    font-size: 5rem;
     margin-right: 10px;
 }
 .menu-buttons {
     display: inline;
     width: 40px;
+    font-size: 2.8rem;
     background-color: transparent;
     border: 0px;
     color: var(--white);
     margin-right: 10px;
     cursor: pointer;
-    font-size: xx-large;
 }
 #menuIcon {
     display: inline;
@@ -111,10 +124,12 @@ nav li {
     border-left: 1px solid var(--dark-2);
 }
 nav li a {
+    font-size: min(1.5rem, 32px);
 }
 #breadCrumb {
     display: flex;
     font-weight: 300;
+    font-size: 1.8rem;
     align-items: center;
 }
 #breadCrumb img {
@@ -128,9 +143,10 @@ nav li a {
 }
 .blogMetaContainer {
     display: grid;
-    margin: 1rem 0;
+    grid-template-columns: 50% 50%;
 }
 .blogMetaContainer span {
+    font-size: 1rem;
     text-transform: uppercase;
 }
 .blogMetaContainer span:nth-child(2) {
@@ -150,6 +166,7 @@ nav li a {
     cursor: pointer;
     background-image: linear-gradient(30deg, rgb(252, 87, 94), rgb(247, 180, 44));
     color: var(--dark);
+    font-size: min(2rem, 16px);
     font-weight: 700;
     text-align: center;
 }
@@ -190,6 +207,7 @@ footer img {
     align-items: center;
 }
 #socialItems div a span {
+    font-size: 1.25rem;
 }
 #newsletterContainer {
     display: flex;
@@ -200,8 +218,10 @@ footer img {
     padding: 12px;
     border-radius: 5px;
     border: 1px solid var(--dark);
+    font-size: 1.33rem;
 }
 footer div:last-child p {
+    font-size: 18px;
     text-align: center;
 }
 

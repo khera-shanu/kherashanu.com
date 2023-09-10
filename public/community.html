@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Community | Kherashanu.com</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+        <link rel="icon" type="image/png" href="/static/assets/fav.png">
+        <link rel="stylesheet" href="/static/css/main.css" />
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="menuToggle">
+                    <button id="menuIcon" class="menu-buttons">☰</button>
+                    <button id="crossIcon" class="menu-buttons">X</button>
+                </div>
+                <div id="menuContainer">
+                    <ul>
+                        <li><a href="/about.html">About Me</a></li>
+                        <li><a href="/">Blogs</a></li>
+                        <li><a href="/community.html">Community</a></li>
+                        <li><a href="#" onclick="javascript: showTodoPopup()">Projects</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <h2 id="breadCrumb">
+                <img src="/static/assets/home.svg" />
+                <span>&nbsp;&gt;&nbsp;</span>
+                <span> Community </span>
+            </h2>
+            
+<section id="community">
+    <p>TLDR; Learn everything computer sciency using AI for free: <a href="https://discord.gg/unKd8W99R4" target="_blank" class="orangeButton">JOIN THE COMMUNITY ON DISCORD</a></p>
+    <h1>Giganoto Community: Pioneering the New Age of Education</h1>
+    <p>In the digital age, where the boundaries of traditional classrooms have expanded beyond walls, communities like Giganoto have emerged as revolutionary platforms for learners worldwide. With over 500 members on Discord, Giganoto is not just a mere community; it is a family, a support system, and a repository of knowledge. Created with the vision to assist the new generation of programmers who might not have the means to access quality education, Giganoto is more than just an interactive forum. It is a safe haven for ambitious, self-driven learners, where the passion for coding and programming is nurtured, shared, and celebrated.</p>
+    <p>A standout feature of Giganoto is the integration of WATARI AI, a groundbreaking AI bot tailored to enhance the learning experience of Giganoto’s bootcamp attendees. Watari is not just an AI; it embodies the spirit of Giganoto. With its vast storage of content, resources, and educational materials, Watari promises to transform how learners interact with knowledge. No more waiting for feedback on assignments, no more hours spent in confusion over a coding problem. Watari is there, 24/7, ensuring that doubts are cleared and assignments are evaluated promptly. The quirky feature of feeding Watari apples to maintain its efficiency adds a fun element to learning, keeping the process interactive and engaging. Watari represents the epitome of tech-integration in education, a beacon for what the future holds.</p>
+    <p>The Giganoto community and Watari AI collectively symbolize the evolution of education in the tech era. While Giganoto offers a sense of belonging, Watari ensures that the learning process is streamlined, effective, and enjoyable. Together, they are shaping the destinies of hundreds of budding programmers, ensuring that quality education is no longer a luxury but a right accessible to all.</p>
+    <h2>Key Features of Giganoto and Watari:</h2>
+    <ul>
+        <li><b>Vast Community:</b> Over 500 members on Discord, offering diverse perspectives and skillsets.</li>
+        <li><b>Innovative Learning:</b> Watari AI assists in real-time grading, doubt-clearing, and resource provision.</li>
+        <li><b>Accessibility:</b> Aims to provide quality education to those who might not traditionally have access.</li>
+        <li><b>Interactive Experience:</b> The unique concept of feeding apples to Watari keeps learners engaged.</li>
+        <li><b>Future of Education:</b> A combination of community support and AI-assistance sets a new standard for digital learning</li>
+    </ul>
+</section>
+
+        </main>
+        <footer>
+            <div>
+                <div id="socialItems">
+                    <div>
+                        <img src="/static/assets/linkedin.png" class="footerIcon" />
+                        <a href="https://www.linkedin.com/in/khera-shanu" title="Connect on Linkedin" target="_blank">
+                            <span>Connect on Linkedin</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/twitter.png" class="footerIcon" />
+                        <a href="https://twitter.com/kherashanu" title="Follow on Twitter" target="_blank">
+                            <span>Follow on Twitter / X</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/github.png" class="footerIcon" />
+                        <a href="https://github.com/khera-shanu" title="Follow on Github" target="_blank">
+                            <span>Follow on Github</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="newsletterContainer">
+                    <input type="email" placeholder="Enter Your Email if You ❤️ Programming and AI." />
+                    <button class="orangeButton" id="subscribeButton" onclick="javascript: showTodoPopup()">Subscribe to weekly Newsletter!</button>
+                </div>
+            </div>
+            <div>
+                <p>All rights reserved.</p>
+                <p>All content belongs to the respective authors unless mentioned otherwise!</p>
+                <p>Build in 🇮🇳. Build using the FOSS tool - <a href="https://github.com/khera-shanu/asha" target="_blank">ASHA</a></p>
+            </div>
+        </footer>
+        <script>
+            const toggleMenu = (showMenu) => {
+                document.querySelector("#menuIcon").style.display = showMenu ? 'none' : 'inline';
+                document.querySelector("#crossIcon").style.display = showMenu ? 'inline' : 'none';
+                document.querySelector("#menuContainer").style.display = showMenu ? 'flex' : 'none';
+                document.querySelector("main").style.filter = showMenu ? 'blur(3px)' : 'blur(0px)';
+            };
+
+            document.querySelector("#menuIcon").onclick = () => toggleMenu(true);
+            document.querySelector("#crossIcon").onclick = () => toggleMenu(false);
+
+            const showTodoPopup = () => {
+                alert("This feature is not yet implemented!");
+            };
+
+        </script>
+    </body>
+</html>

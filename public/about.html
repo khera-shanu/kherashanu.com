@@ -1,9 +1,43 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>About Me | Kherashanu.com</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+        <link rel="icon" type="image/png" href="/static/assets/fav.png">
+        <link rel="stylesheet" href="/static/css/main.css" />
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="menuToggle">
+                    <button id="menuIcon" class="menu-buttons">☰</button>
+                    <button id="crossIcon" class="menu-buttons">X</button>
+                </div>
+                <div id="menuContainer">
+                    <ul>
+                        <li><a href="/about.html">About Me</a></li>
+                        <li><a href="/">Blogs</a></li>
+                        <li><a href="/community.html">Community</a></li>
+                        <li><a href="#" onclick="javascript: showTodoPopup()">Projects</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <h2 id="breadCrumb">
+                <img src="/static/assets/home.svg" />
+                <span>&nbsp;&gt;&nbsp;</span>
+                <span> About Me </span>
+            </h2>
+            
 <section id="aboutMe">
     <div id="summaryContainer">
         <div>
-            <img src="{{url_for('static', filename='assets/profile.jpeg')}}" alt="Shanu Khera" class="imgRound" />
+            <img src="/static/assets/profile.jpeg" alt="Shanu Khera" class="imgRound" />
         </div>
         <div>
             <p>Hi, My name is Shanu Khera, a pragmatic programmer with a passion for solving problems using technology.</p>
@@ -89,4 +123,56 @@
         </div>
     </div>
 </section>
-{% endblock %}
+
+        </main>
+        <footer>
+            <div>
+                <div id="socialItems">
+                    <div>
+                        <img src="/static/assets/linkedin.png" class="footerIcon" />
+                        <a href="https://www.linkedin.com/in/khera-shanu" title="Connect on Linkedin" target="_blank">
+                            <span>Connect on Linkedin</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/twitter.png" class="footerIcon" />
+                        <a href="https://twitter.com/kherashanu" title="Follow on Twitter" target="_blank">
+                            <span>Follow on Twitter / X</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/github.png" class="footerIcon" />
+                        <a href="https://github.com/khera-shanu" title="Follow on Github" target="_blank">
+                            <span>Follow on Github</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="newsletterContainer">
+                    <input type="email" placeholder="Enter Your Email if You ❤️ Programming and AI." />
+                    <button class="orangeButton" id="subscribeButton" onclick="javascript: showTodoPopup()">Subscribe to weekly Newsletter!</button>
+                </div>
+            </div>
+            <div>
+                <p>All rights reserved.</p>
+                <p>All content belongs to the respective authors unless mentioned otherwise!</p>
+                <p>Build in 🇮🇳. Build using the FOSS tool - <a href="https://github.com/khera-shanu/asha" target="_blank">ASHA</a></p>
+            </div>
+        </footer>
+        <script>
+            const toggleMenu = (showMenu) => {
+                document.querySelector("#menuIcon").style.display = showMenu ? 'none' : 'inline';
+                document.querySelector("#crossIcon").style.display = showMenu ? 'inline' : 'none';
+                document.querySelector("#menuContainer").style.display = showMenu ? 'flex' : 'none';
+                document.querySelector("main").style.filter = showMenu ? 'blur(3px)' : 'blur(0px)';
+            };
+
+            document.querySelector("#menuIcon").onclick = () => toggleMenu(true);
+            document.querySelector("#crossIcon").onclick = () => toggleMenu(false);
+
+            const showTodoPopup = () => {
+                alert("This feature is not yet implemented!");
+            };
+
+        </script>
+    </body>
+</html>

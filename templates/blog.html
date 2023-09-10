@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block pageName %} Blogs &gt; {{blog["metadata"]["title"]}} {% endblock %}
+{% block content %}
+<section id="blogMetadata">
+    <h4>Category: {{blog['metadata']['category']}}</h3>
+    <h5>Author: {{blog['metadata']['author']}}</h4>
+    <h5>Created On: {{blog["metadata"]["create_date"].strftime("%B %d, %Y")}}</h5>
+    <h5>Last Updated On: {{blog["metadata"]["update_date"].strftime("%B %d, %Y")}}</h5>
+    <h5>A {{blog['metadata']['time_to_read']}}</h5>
+</section>
+<section class="blog">
+    {{blog['content'] | safe}}
+</section>
+{% endblock %}

@@ -1,87 +1,45 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="blogSnippet">
-    <p>August 28, 2023</p>
-    <h2>Mastering Stream Processing: Kafka's Role in Real-time Data Analysis</h2>
-    <p>In the era of instant gratification, real-time data processing isn't just a luxury—it's a necessity. Dive deep into Kafka's pivotal role in transforming how businesses approach stream processing ...</p>
-    <div class="blogMetaContainer">
-        <span>~ 5 Minutes Read</span>
-        <span><span>Data Engineering</span></span>
-        <button class="orangeButton">Read More!</button>
-    </div>
-</section>
-<section class="blogSnippet">
-    <p>August 28, 2023</p>
-    <h2>Mastering Stream Processing: Kafka's Role in Real-time Data Analysis</h2>
-    <p>In the era of instant gratification, real-time data processing isn't just a luxury—it's a necessity. Dive deep into Kafka's pivotal role in transforming how businesses approach stream processing ...</p>
-    <div class="blogMetaContainer">
-        <span>~ 5 Minutes Read</span>
-        <span><span>Data Engineering</span></span>
-        <button class="orangeButton">Read More!</button>
-    </div>
-</section>
-<section>
-    <ul id="blogList">
-        <li>
-            <h3>2023</h3>
-            <ul class="ul-year">
-                <li>
-                    <h4>August</h4>
-                    <ul class="ul-month">
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <h4>July</h4>
-                    <ul class="ul-month">
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <h3>2022</h3>
-            <ul class="ul-year">
-                <li>
-                    <h4>August</h4>
-                    <ul class="ul-month">
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <h4>July</h4>
-                    <ul class="ul-month">
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                        <li>
-                            <h5>Optimizing Microservices: Best Practices for Efficient Scaling</h5>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</section>
+    {% for blogSlug, blog in allBlogs.items() | list | reverse %}
+        <section class="blogSnippet">
+            <p>{{blog["metadata"]["create_date"].strftime("%B %d, %Y")}}</p>
+            <h2>{{blog["metadata"]["title"]}}</h2>
+            <p>{{blog["metadata"]["description"]}}</p>
+            <div class="blogMetaContainer">
+                <span> ~ {{ blog["metadata"]["time_to_read"] }}</span>
+                <span><span> {{ blog["metadata"]["category"] }} </span></span>
+                <a href="{{url_for('blog', blog_id=blogSlug)}}" class="orangeButton">
+                    Read Now!
+                </a>
+            </div>
+        </section>
+    {% endfor %}
+    <section>
+        <ul id="blogList">
+            {% for year, blogsByMonth in blogsByYearMonth.items() | list | reverse %}
+            <li>
+                <h3>{{year}}</h3>
+                <ul class="ul-year">
+                {% for month, blogsBySlug in blogsByMonth.items() %}
+                    <li>
+                        <h4>{{month}}</h4>
+                        <ul class="ul-month">
+                        {% for blogSlug, blog in blogsBySlug.items() %}
+                            <li>
+                                <h5>
+                                    <a href="{{url_for('blog', blog_id=blogSlug)}}" target="_blank">
+                                        {{blog["metadata"]["title"]}}
+                                    </a>
+                                </h5>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
 {% endblock %}
