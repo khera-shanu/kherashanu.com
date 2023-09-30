@@ -1,15 +1,15 @@
 ---
 title: Why HTML is Not a Programming Language
 author: KHERA SHANU
-create_date: 2011-03-12
-update_date: 2011-03-12
+create_date: 2013-03-12
+update_date: 2013-03-12
 tags:
   - Computer Science
   - Web Development
   - HTML
 category: Computer Science 101
 description: "Exploring the computer science rationale behind why HTML, despite its importance in web development, is not classified as a programming language."
-thumb: alan-turing.jpg
+thumb: turing-machine.jpg
 published: true
 ---
 
