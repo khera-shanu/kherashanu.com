@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> | Kherashanu.com</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+        <link rel="icon" type="image/png" href="/static/assets/fav.png">
+        <link rel="stylesheet" href="/static/css/main.css" />
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="menuToggle">
+                    <button id="menuIcon" class="menu-buttons">☰</button>
+                    <button id="crossIcon" class="menu-buttons">X</button>
+                </div>
+                <div id="menuContainer">
+                    <ul>
+                        <li><a href="/about.html">About Me</a></li>
+                        <li><a href="/">Blogs</a></li>
+                        <li><a href="/community.html">Community</a></li>
+                        <li><a href="/projects.html">Projects</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <h2 id="breadCrumb">
+                <a href="/" class="noStyleA">
+                    <img src="/static/assets/home.svg" alt="Home Page" />
+                </a>
+                <span>&nbsp;&gt;&nbsp;</span>
+                <span> Blogs &gt; Why HTML is Not a Programming Language </span>
+            </h2>
+            
+<section id="blogMetadata">
+    <h4>Category: Computer Science 101</h3>
+    <h5>Author: KHERA SHANU</h4>
+    <h5>Created On: March 12, 2011</h5>
+    <h5>Last Updated On: March 12, 2011</h5>
+    <h5>A 3 min read</h5>
+</section>
+<section class="blog">
+    <p>One of the most common misconceptions in the tech world is that HTML (HyperText Markup Language) is a programming language. While it's crucial for web development and has "language" in its name, it isn’t a programming language. Let's deep dive into the computer science concepts to understand the distinction, starting with the primary criteria for a system to be considered a programming language: Turing completeness.</p>
+<h3>Turing Completeness</h3>
+<p>To qualify as a programming language, a system must be Turing complete. This means that it should be able to simulate a Turing machine—a mathematical model of computation that defines an abstract machine which manipulates symbols on a strip of tape according to a table of rules. In simpler terms, a Turing complete system can solve any computational problem, given enough time and resources.</p>
+<p>Programming languages like Python, Java, and C are Turing complete. They can perform logical operations, loop through data, make decisions based on conditions, and more. They can, theoretically, compute any computable function.</p>
+<p>HTML, on the other hand, cannot perform these tasks. It is used to describe the structure and presentation of web content. It can't process logic, it can't loop through data, and it can't make decisions.</p>
+<h3>Imperative vs. Declarative Systems</h3>
+<p>Programming languages can be categorized into two primary paradigms: imperative and declarative.</p>
+<ul>
+<li>
+<p><strong>Imperative Languages</strong> describe the "how." They provide a sequence of tasks that tell the computer how to achieve a certain goal. Examples include C, Java, and Python. These languages allow for loops, conditions, and state changes.</p>
+</li>
+<li>
+<p><strong>Declarative Languages</strong> describe the "what." They express logic without specifying its control flow. SQL, for instance, is a declarative language used for managing data in relational databases.</p>
+</li>
+</ul>
+<p>HTML is also a declarative system. When you write an HTML document, you're defining what the content is (e.g., a heading, a paragraph, a list) and, to some extent, how it should appear, but you're not defining how to create or manage that content.</p>
+<h3>Syntax vs. Semantics</h3>
+<p>While both programming languages and markup languages have syntax (rules defining combinations of symbols that are considered to be correctly structured programs or documents), programming languages also have semantics which give these syntactical structures meaning in terms of operations to be carried out by a machine.</p>
+<p>HTML, like XML, has a syntax but lacks the rich semantics which allow for data manipulation, computation, or any kind of problem-solving tasks.</p>
+<h3>Intended Purpose</h3>
+<p>Each tool in the computing world is designed with a purpose in mind.</p>
+<p>Programming Languages are designed to build and control software applications and data processes. They can interact with data, manipulate it, make decisions, and more.</p>
+<p>Markup Languages, like HTML, are designed to annotate text so that the computer can manipulate that text in specific ways. HTML, for instance, tells the browser how to display web content.</p>
+<p>Understanding the distinction between programming languages and markup languages like HTML is crucial for clarity in conversations and for making informed decisions in the tech world. While HTML is not a programming language, it pairs perfectly with cascading style sheets (CSS) and JavaScript (a bona fide programming language) to create the interactive web experiences we all know and love (at least I Love).</p>
+<p>Thanks for Reading, Happy Coding!</p>
+</section>
+
+        </main>
+        <footer>
+            <div>
+                <div id="socialItems">
+                    <div>
+                        <img src="/static/assets/linkedin.png" class="footerIcon" alt="Linkedin" />
+                        <a href="https://www.linkedin.com/in/khera-shanu" title="Connect on Linkedin" target="_blank">
+                            <span>Connect on Linkedin</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/twitter.png" class="footerIcon" alt="Twitter" />
+                        <a href="https://twitter.com/kherashanu" title="Follow on Twitter" target="_blank">
+                            <span>Follow on Twitter / X</span>
+                        </a>
+                    </div>
+                    <div>
+                        <img src="/static/assets/github.png" class="footerIcon" alt="Github" />
+                        <a href="https://github.com/khera-shanu" title="Follow on Github" target="_blank">
+                            <span>Follow on Github</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p>All rights reserved.</p>
+                <p>All content belongs to the respective authors unless mentioned otherwise!</p>
+                <p>Build in 🇮🇳. Build using the FOSS tool - <a href="https://github.com/khera-shanu/asha" target="_blank">ASHA</a></p>
+            </div>
+        </footer>
+        <script>
+            const toggleMenu = (showMenu) => {
+                document.querySelector("#menuIcon").style.display = showMenu ? 'none' : 'inline';
+                document.querySelector("#crossIcon").style.display = showMenu ? 'inline' : 'none';
+                document.querySelector("#menuContainer").style.display = showMenu ? 'flex' : 'none';
+                document.querySelector("main").style.filter = showMenu ? 'blur(3px)' : 'blur(0px)';
+            };
+
+            document.querySelector("#menuIcon").onclick = () => toggleMenu(true);
+            document.querySelector("#crossIcon").onclick = () => toggleMenu(false);
+
+            const showTodoPopup = () => {
+                alert("This feature is not yet implemented!");
+            };
+
+        </script>
+    </body>
+</html>
