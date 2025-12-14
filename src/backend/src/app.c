@@ -228,12 +228,34 @@ static char *google_oauth_exchange(const char *code, const char *redirect_uri) {
   char *email = NULL;
 
   /* Step 1: Exchange code for tokens */
-  char post_data[2048];
+  char post_data[4096];
+  char *code_enc = curl_easy_escape(curl, code, 0);
+  char *id_enc = curl_easy_escape(curl, g_app->google_client_id, 0);
+  char *secret_enc = curl_easy_escape(curl, g_app->google_client_secret, 0);
+  char *uri_enc = curl_easy_escape(curl, redirect_uri, 0);
+
+  if (!code_enc || !id_enc || !secret_enc || !uri_enc) {
+    fprintf(stderr, "Failed to encode OAuth parameters\n");
+    if (code_enc)
+      curl_free(code_enc);
+    if (id_enc)
+      curl_free(id_enc);
+    if (secret_enc)
+      curl_free(secret_enc);
+    if (uri_enc)
+      curl_free(uri_enc);
+    goto cleanup;
+  }
+
   snprintf(post_data, sizeof(post_data),
            "code=%s&client_id=%s&client_secret=%s&redirect_uri=%s&grant_type="
            "authorization_code",
-           code, g_app->google_client_id, g_app->google_client_secret,
-           redirect_uri);
+           code_enc, id_enc, secret_enc, uri_enc);
+
+  curl_free(code_enc);
+  curl_free(id_enc);
+  curl_free(secret_enc);
+  curl_free(uri_enc);
 
   curl_easy_setopt(curl, CURLOPT_URL, "https://oauth2.googleapis.com/token");
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
