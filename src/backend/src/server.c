@@ -396,8 +396,27 @@ static void handle_io(int index) {
         conn->read_buffer[conn->read_pos] = 0;
 
         // Check if we have full headers
-        if (strstr(conn->read_buffer, "\r\n\r\n")) {
-          process_request(conn);
+        char *header_end = strstr(conn->read_buffer, "\r\n\r\n");
+        if (header_end) {
+          http_request_t temp_req;
+          // Parse headers to get Content-Length
+          if (http_parse_request(conn->read_buffer, conn->read_pos,
+                                 &temp_req) == 0) {
+            size_t header_len = (header_end - conn->read_buffer) + 4;
+            size_t total_len = header_len + temp_req.content_length;
+            bool complete = (conn->read_pos >= total_len);
+
+            // Cleanup temp request
+            http_request_cleanup(&temp_req);
+
+            if (complete) {
+              process_request(conn);
+            }
+            // else: wait for more data
+          } else {
+            // parsing failed even with header end?
+            process_request(conn);
+          }
         }
       } else {
         // Buffer overflow - close
