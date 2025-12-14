@@ -41,8 +41,11 @@ if [ ! -d "./certbot/conf/live/$DOMAIN" ]; then
       -subj '/CN=localhost'" certbot
 fi
 
-echo "### Starting nginx..."
-docker compose up -d nginx
+echo "### Starting application and nginx..."
+docker compose up -d kherashanu nginx
+
+echo "### Waiting for application to be ready..."
+sleep 5
 
 echo "### Deleting dummy certificate for $DOMAIN..."
 docker compose run --rm --entrypoint "\
@@ -68,8 +71,7 @@ docker compose run --rm --entrypoint "\
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
-    -d $DOMAIN \
-    -d www.$DOMAIN" certbot
+    -d $DOMAIN" certbot
 
 echo "### Reloading nginx..."
 docker compose exec nginx nginx -s reload
