@@ -44,8 +44,8 @@ services:
     volumes:
       - ./nginx-ssl.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
-      - certbot-conf:/etc/letsencrypt:ro
-      - certbot-www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - kherashanu
     logging:
@@ -61,8 +61,8 @@ services:
     image: certbot/certbot:latest
     container_name: kherashanu-certbot
     volumes:
-      - certbot-conf:/etc/letsencrypt
-      - certbot-www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     # Auto-renews certificates every 12 hours
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     command: ""
@@ -80,8 +80,4 @@ networks:
 
 volumes:
   kherashanu-data:
-    driver: local
-  certbot-conf:
-    driver: local
-  certbot-www:
     driver: local

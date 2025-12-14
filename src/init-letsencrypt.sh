@@ -61,8 +61,8 @@ docker run -d --name kherashanu-nginx-temp \
   --network src_kherashanu-network \
   -p 80:80 \
   -v "$(pwd)/nginx-http-only.conf:/etc/nginx/nginx.conf:ro" \
-  -v src_certbot-conf:/etc/letsencrypt:ro \
-  -v src_certbot-www:/var/www/certbot:rw \
+  -v "$(pwd)/certbot/conf:/etc/letsencrypt:ro" \
+  -v "$(pwd)/certbot/www:/var/www/certbot:rw" \
   nginx:alpine
 
 # Ensure the ACME challenge directory exists with proper permissions
