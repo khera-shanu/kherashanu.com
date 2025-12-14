@@ -87,19 +87,7 @@ export default function LoginPage() {
                         </svg>
                         Sign in with Google
                     </Button>
-                    <div className="mt-4">
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={async () => {
-                                const { loginWithOAuthCode } = await import('@/lib/api');
-                                await loginWithOAuthCode('DEV_LOGIN');
-                                window.location.href = '/admin/dashboard';
-                            }}
-                        >
-                            Dev Login
-                        </Button>
-                    </div>
+
                 </CardContent>
             </Card>
         </div>

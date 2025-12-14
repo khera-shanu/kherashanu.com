@@ -613,20 +613,14 @@ kfw_error_t api_auth_google(kfw_request_t *req, kfw_response_t *resp) {
       }
     }
 
-    /* Production mode: exchange OAuth code for email */
-    if (strcmp(code, "DEV_LOGIN") == 0) {
-      // Dev login bypass
-      email = g_app->admin_email;
-    } else {
-      oauth_email = google_oauth_exchange(code, redirect_uri);
-      if (!oauth_email) {
-        kfw_resp_error(
-            resp, 401,
-            "OAuth token exchange failed - invalid code or configuration");
-        return KFW_ERR_UNAUTHORIZED;
-      }
-      email = oauth_email;
+    oauth_email = google_oauth_exchange(code, redirect_uri);
+    if (!oauth_email) {
+      kfw_resp_error(
+          resp, 401,
+          "OAuth token exchange failed - invalid code or configuration");
+      return KFW_ERR_UNAUTHORIZED;
     }
+    email = oauth_email;
   } else {
     kfw_resp_error(resp, 400, "Missing OAuth code");
     return KFW_ERR_BAD_REQUEST;
