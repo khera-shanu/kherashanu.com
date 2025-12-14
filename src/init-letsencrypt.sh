@@ -44,6 +44,10 @@ echo "### Starting application and nginx (HTTP-only mode)..."
 docker compose stop nginx 2>/dev/null || true
 docker compose rm -f nginx 2>/dev/null || true
 
+# Clean up any existing temporary nginx container
+docker stop kherashanu-nginx-temp 2>/dev/null || true
+docker rm kherashanu-nginx-temp 2>/dev/null || true
+
 # Start nginx with HTTP-only config
 docker run -d --name kherashanu-nginx-temp \
   --network src_kherashanu-network \
