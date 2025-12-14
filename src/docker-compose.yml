@@ -1,0 +1,87 @@
+services:
+  kherashanu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kherashanu2:latest
+    container_name: kherashanu
+    restart: unless-stopped
+    # Port only exposed to docker network, not publicly
+    # Nginx reverse proxy handles external traffic
+    expose:
+      - "3000"
+    volumes:
+      # Persist database
+      - ./backend/data:/app/data
+      # Optional: Mount Google OAuth secrets (if using production OAuth)
+      # - ./google_oauth_secrets.json:/app/google_oauth_secrets.json:ro
+    environment:
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-kherashanu@gmail.com}
+      # Production OAuth redirect URI
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://kherashanu.com/auth/callback}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - kherashanu-network
+
+  # Optional: Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: kherashanu-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-ssl.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - certbot-conf:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    depends_on:
+      - kherashanu
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - kherashanu-network
+
+  # Certbot for SSL certificate management
+  certbot:
+    image: certbot/certbot:latest
+    container_name: kherashanu-certbot
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    # Auto-renews certificates every 12 hours
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    command: ""
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    networks:
+      - kherashanu-network
+
+networks:
+  kherashanu-network:
+    driver: bridge
+
+volumes:
+  kherashanu-data:
+    driver: local
+  certbot-conf:
+    driver: local
+  certbot-www:
+    driver: local

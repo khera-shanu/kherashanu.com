@@ -1,0 +1,28 @@
+# Global
+.DS_Store
+*.log
+*.d
+
+# Backend - Build Artifacts
+backend/build/
+backend/*.o
+backend/kherashanu-server
+backend/create_session
+backend/create_session_token
+backend/debug_dump
+
+# Backend - Database
+backend/*.db
+backend/*.db.wal
+backend/*.db.shm
+
+# Backend - Secrets & Certs
+backend/certs/
+backend/google_oauth_secrets.json
+
+# Backend - Logs
+backend/server_repro*.log
+
+# Frontend (Redundant but good for visibility)
+frontend/node_modules/
+frontend/dist/
