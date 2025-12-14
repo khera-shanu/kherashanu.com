@@ -34,15 +34,27 @@ fi
 
 # Check if certificates already exist
 echo ""
-if [ -d "./certbot/conf/live/kherashanu.com" ] || docker volume ls | grep -q certbot-conf; then
-    echo "📜 SSL certificates already exist"
-    read -p "   Re-initialize certificates? (y/N) " -n 1 -r
+# Check if certificates actually exist in the docker volume
+echo ""
+echo "🔍 Checking for existing SSL certificates..."
+CERT_EXISTS=false
+if docker compose run --rm --entrypoint /bin/sh certbot -c "test -f /etc/letsencrypt/live/kherashanu.com/fullchain.pem" >/dev/null 2>&1; then
+    CERT_EXISTS=true
+fi
+
+if [ "$CERT_EXISTS" = "true" ]; then
+    echo "✅ SSL certificates found in volume"
+    read -p "   Re-initialize certificates anyway? (y/N) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "🔐 Running SSL certificate initialization..."
+        chmod +x init-letsencrypt.sh
         ./init-letsencrypt.sh
+    else
+        echo "⏭️  Skipping initialization (using existing certificates)"
     fi
 else
+    echo "⚠️  SSL certificates NOT found in volume"
     echo "🔐 Initializing SSL certificates..."
     if [ ! -f ./init-letsencrypt.sh ]; then
         echo "❌ init-letsencrypt.sh not found!"
