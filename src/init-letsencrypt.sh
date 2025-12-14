@@ -10,7 +10,7 @@ EMAIL="kherashanu@gmail.com"
 # IMPORTANT: Set STAGING=0 for production certificates after testing
 # STAGING=1 uses Let's Encrypt staging environment (for testing, no rate limits)
 # STAGING=0 uses Let's Encrypt production environment (real certificates, rate limited)
-STAGING=1
+STAGING=0
 
 echo "### Preparing Let's Encrypt certificate for $DOMAIN..."
 
