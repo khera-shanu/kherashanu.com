@@ -55,11 +55,11 @@ fi
 # Build and start services
 echo ""
 echo "🐳 Building Docker images..."
-docker-compose build
+docker compose build
 
 echo ""
 echo "🚀 Starting services..."
-docker-compose up -d
+docker compose up -d
 
 # Wait for services to be healthy
 echo ""
@@ -69,7 +69,7 @@ sleep 5
 # Check service status
 echo ""
 echo "📊 Service Status:"
-docker-compose ps
+docker compose ps
 
 # Check health
 echo ""
@@ -109,8 +109,8 @@ echo ""
 echo "Next steps:"
 echo "  1. Verify the site loads in your browser"
 echo "  2. Test Google OAuth authentication"
-echo "  3. Check certificate status: docker-compose run --rm certbot certificates"
-echo "  4. Monitor logs: docker-compose logs -f"
+echo "  3. Check certificate status: docker compose run --rm certbot certificates"
+echo "  4. Monitor logs: docker compose logs -f"
 echo ""
 echo "For troubleshooting, see PRODUCTION_CHECKLIST.md"
 echo "═══════════════════════════════════════════════════════"
