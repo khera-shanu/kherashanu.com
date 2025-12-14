@@ -32,26 +32,38 @@ fi
 
 # Create dummy certificate for nginx to start
 if [ ! -d "./certbot/conf/live/$DOMAIN" ]; then
-  echo "### Creating dummy certificate for $DOMAIN..."
-  mkdir -p "./certbot/conf/live/$DOMAIN"
-  docker compose run --rm --entrypoint "\
-    openssl req -x509 -nodes -newkey rsa:4096 -days 1\
-      -keyout /etc/letsencrypt/live/$DOMAIN/privkey.pem \
-      -out /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
-      -subj '/CN=localhost'" certbot
+  echo "### Switching to HTTP-only nginx config for certificate acquisition..."
+  # Temporarily use HTTP-only config (no SSL requirements)
+  cp nginx-ssl.conf nginx-ssl.conf.bak
+  cp nginx-http-only.conf nginx.conf.tmp
 fi
 
-echo "### Starting application and nginx..."
-docker compose up -d kherashanu nginx
+# Start nginx with HTTP-only config via temporary override
+echo "### Starting application and nginx (HTTP-only mode)..."
+# Use the HTTP-only config by temporarily swapping the mount
+docker compose stop nginx 2>/dev/null || true
+docker compose rm -f nginx 2>/dev/null || true
 
-echo "### Waiting for application to be ready..."
+# Start nginx with HTTP-only config
+docker run -d --name kherashanu-nginx-temp \
+  --network src_kherashanu-network \
+  -p 80:80 \
+  -v "$(pwd)/nginx-http-only.conf:/etc/nginx/nginx.conf:ro" \
+  -v "$(pwd)/certbot/conf:/etc/letsencrypt:ro" \
+  -v "$(pwd)/certbot/www:/var/www/certbot:rw" \
+  nginx:alpine
+
+# Start application container
+docker compose up -d kherashanu
+
+echo "### Waiting for nginx to be ready..."
 sleep 5
 
-echo "### Deleting dummy certificate for $DOMAIN..."
+echo "### Deleting any existing certificates for $DOMAIN..."
 docker compose run --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$DOMAIN && \
   rm -rf /etc/letsencrypt/archive/$DOMAIN && \
-  rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
+  rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot || true
 
 echo "### Requesting Let's Encrypt certificate for $DOMAIN..."
 
@@ -73,8 +85,20 @@ docker compose run --rm --entrypoint "\
     --no-eff-email \
     -d $DOMAIN" certbot
 
-echo "### Reloading nginx..."
-docker compose exec nginx nginx -s reload
+echo "### Certificate obtained successfully!"
+
+echo "### Stopping temporary HTTP-only nginx..."
+docker stop kherashanu-nginx-temp
+docker rm kherashanu-nginx-temp
+
+echo "### Starting full stack with SSL..."
+docker compose up -d
+
+echo "### Waiting for services to start..."
+sleep 3
+
+echo "### Reloading nginx with SSL configuration..."
+docker compose exec nginx nginx -s reload || echo "Nginx will auto-reload on next restart"
 
 echo "### Certificate setup complete!"
 echo "### To switch to production certificates, set STAGING=0 in this script and run again."
