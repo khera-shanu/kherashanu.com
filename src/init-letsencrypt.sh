@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Initialize Let's Encrypt SSL certificates for kherashanu.com
-# This script should be run once before starting the full docker-compose stack
+# This script should be run once before starting the full docker compose stack
 
 set -e
 
@@ -41,7 +41,7 @@ fi
 # Start nginx with HTTP-only config via temporary override
 echo "### Starting application and nginx (HTTP-only mode)..."
 
-# Stop any running nginx from docker-compose
+# Stop any running nginx from docker compose
 docker compose stop nginx 2>/dev/null || true
 docker compose rm -f nginx 2>/dev/null || true
 
@@ -56,7 +56,7 @@ echo "### Waiting for network to be ready..."
 sleep 2
 
 # Now start nginx with HTTP-only config (network exists now)
-# Important: Use Docker volumes WITH src_ prefix to match docker-compose volume names
+# Important: Use Docker volumes WITH src_ prefix to match docker compose volume names
 docker run -d --name kherashanu-nginx-temp \
   --network src_kherashanu-network \
   -p 80:80 \
