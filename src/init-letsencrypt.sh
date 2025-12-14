@@ -40,7 +40,8 @@ fi
 
 # Start nginx with HTTP-only config via temporary override
 echo "### Starting application and nginx (HTTP-only mode)..."
-# Use the HTTP-only config by temporarily swapping the mount
+
+# Stop any running nginx from docker-compose
 docker compose stop nginx 2>/dev/null || true
 docker compose rm -f nginx 2>/dev/null || true
 
@@ -48,7 +49,13 @@ docker compose rm -f nginx 2>/dev/null || true
 docker stop kherashanu-nginx-temp 2>/dev/null || true
 docker rm kherashanu-nginx-temp 2>/dev/null || true
 
-# Start nginx with HTTP-only config
+# Start application container first (this creates the network)
+docker compose up -d kherashanu
+
+echo "### Waiting for network to be ready..."
+sleep 2
+
+# Now start nginx with HTTP-only config (network exists now)
 docker run -d --name kherashanu-nginx-temp \
   --network src_kherashanu-network \
   -p 80:80 \
@@ -56,9 +63,6 @@ docker run -d --name kherashanu-nginx-temp \
   -v "$(pwd)/certbot/conf:/etc/letsencrypt:ro" \
   -v "$(pwd)/certbot/www:/var/www/certbot:rw" \
   nginx:alpine
-
-# Start application container
-docker compose up -d kherashanu
 
 echo "### Waiting for nginx to be ready..."
 sleep 5
