@@ -56,13 +56,18 @@ echo "### Waiting for network to be ready..."
 sleep 2
 
 # Now start nginx with HTTP-only config (network exists now)
+# Important: Use Docker volumes (not local dirs) to match certbot container
 docker run -d --name kherashanu-nginx-temp \
   --network src_kherashanu-network \
   -p 80:80 \
   -v "$(pwd)/nginx-http-only.conf:/etc/nginx/nginx.conf:ro" \
-  -v "$(pwd)/certbot/conf:/etc/letsencrypt:ro" \
-  -v "$(pwd)/certbot/www:/var/www/certbot:rw" \
+  -v certbot-conf:/etc/letsencrypt:ro \
+  -v certbot-www:/var/www/certbot:rw \
   nginx:alpine
+
+# Ensure the ACME challenge directory exists with proper permissions
+docker exec kherashanu-nginx-temp mkdir -p /var/www/certbot/.well-known/acme-challenge
+docker exec kherashanu-nginx-temp chmod -R 755 /var/www/certbot
 
 echo "### Waiting for nginx to be ready..."
 sleep 5
