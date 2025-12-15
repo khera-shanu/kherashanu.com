@@ -53,7 +53,7 @@ function Footer() {
                 <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
                     Built by {PROFILE.basics.name}. The source code is available on{" "}
                     <a
-                        href="https://github.com/khera-shanu"
+                        href="https://github.com/khera-shanu/kherashanu.com"
                         target="_blank"
                         rel="noreferrer"
                         className="font-medium underline underline-offset-4"

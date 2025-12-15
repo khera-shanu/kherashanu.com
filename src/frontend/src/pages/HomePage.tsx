@@ -74,7 +74,7 @@ export default function HomePage() {
             </section>
 
             {/* Latest Blog Post Excerpt */}
-            <section className="space-y-6">
+            <section className="space-y-6 px-8">
                 <h2 className="text-2xl font-bold tracking-tight text-center">Latest from the Blog</h2>
                 {latestBlog ? (
                     <Link to={`/blog/${latestBlog.url_slug}`}>
@@ -105,7 +105,7 @@ export default function HomePage() {
             </section>
 
             {/* About Section */}
-            <section className="space-y-6">
+            <section className="space-y-6 px-8">
                 <h2 className="text-3xl font-bold tracking-tight">About Me</h2>
                 <div
                     className="prose prose-stone dark:prose-invert max-w-none text-muted-foreground"
@@ -114,7 +114,7 @@ export default function HomePage() {
             </section>
 
             {/* Experience Section */}
-            <section className="space-y-6">
+            <section className="space-y-6 px-8">
                 <h2 className="text-3xl font-bold tracking-tight">Experience</h2>
                 <div className="space-y-8">
                     {PROFILE.sections.experience.items.map((job) => (
@@ -140,7 +140,7 @@ export default function HomePage() {
             </section>
 
             {/* Skills Section */}
-            <section className="space-y-6">
+            <section className="space-y-6 px-8">
                 <h2 className="text-3xl font-bold tracking-tight">Skills</h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {PROFILE.sections.skills.items.map((skillGroup) => (
@@ -161,7 +161,7 @@ export default function HomePage() {
             </section>
 
             {/* Projects Section */}
-            <section className="space-y-6">
+            <section className="space-y-6 px-8">
                 <h2 className="text-3xl font-bold tracking-tight">Featured Projects</h2>
                 <div className="grid gap-6 md:grid-cols-2">
                     {PROFILE.sections.projects.items.map((project) => (
