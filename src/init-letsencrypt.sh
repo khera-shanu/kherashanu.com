@@ -93,11 +93,11 @@ fi
 docker compose run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $STAGING_ARG \
-    --server https://api.buypass.com/acme/directory \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
-    -d $DOMAIN" certbot
+    -d $DOMAIN \
+    -d www.$DOMAIN" certbot
 
 echo "### Certificate obtained successfully!"
 
