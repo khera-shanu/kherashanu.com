@@ -14,7 +14,7 @@ services:
       # Persist database
       - ./backend/data:/app/data
       # Optional: Mount Google OAuth secrets (if using production OAuth)
-      # - ./google_oauth_secrets.json:/app/google_oauth_secrets.json:ro
+      - ./google_oauth_secrets.json:/app/google_oauth_secrets.json:ro
     environment:
       - ADMIN_EMAIL=${ADMIN_EMAIL:-kherashanu@gmail.com}
       # Production OAuth redirect URI
