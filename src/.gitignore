@@ -10,6 +10,8 @@ backend/kherashanu-server
 backend/create_session
 backend/create_session_token
 backend/debug_dump
+data
+data/*
 
 # Backend - Database
 backend/*.db
