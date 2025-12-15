@@ -72,11 +72,11 @@ docker exec kherashanu-nginx-temp chmod -R 755 /var/www/certbot
 echo "### Waiting for nginx to be ready..."
 sleep 5
 
-echo "### Deleting any existing certificates for $DOMAIN..."
-docker compose run --rm --entrypoint "\
-  rm -rf /etc/letsencrypt/live/$DOMAIN && \
-  rm -rf /etc/letsencrypt/archive/$DOMAIN && \
-  rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot || true
+# echo "### Deleting any existing certificates for $DOMAIN..."
+# docker compose run --rm --entrypoint "\
+#   rm -rf /etc/letsencrypt/live/$DOMAIN && \
+#   rm -rf /etc/letsencrypt/archive/$DOMAIN && \
+#   rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot || true
 
 echo "### Requesting Let's Encrypt certificate for $DOMAIN..."
 
@@ -93,6 +93,7 @@ fi
 docker compose run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $STAGING_ARG \
+    --server https://api.buypass.com/acme/directory \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
@@ -114,4 +115,3 @@ echo "### Reloading nginx with SSL configuration..."
 docker compose exec nginx nginx -s reload || echo "Nginx will auto-reload on next restart"
 
 echo "### Certificate setup complete!"
-echo "### To switch to production certificates, set STAGING=0 in this script and run again."
