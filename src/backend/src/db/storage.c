@@ -368,6 +368,65 @@ table_t *storage_get_table(storage_t *store, const char *name) {
 }
 
 /*
+ * Add a column to an existing table (for schema migrations)
+ * This modifies the table metadata but existing rows will have NULL for the new
+ * column
+ */
+kdb_error_t storage_add_column(storage_t *store, const char *table_name,
+                               const kdb_column_def_t *col) {
+  if (!store || !table_name || !col)
+    return KDB_ERR_IO;
+
+  pthread_mutex_lock(&store->lock);
+
+  table_t *table = NULL;
+  int table_idx = -1;
+  for (int i = 0; i < store->num_tables; i++) {
+    if (strcasecmp(store->tables[i].name, table_name) == 0) {
+      table = &store->tables[i];
+      table_idx = i;
+      break;
+    }
+  }
+
+  if (!table) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NO_TABLE;
+  }
+
+  /* Check if column already exists */
+  for (int i = 0; i < table->num_columns; i++) {
+    if (strcasecmp(table->columns[i].name, col->name) == 0) {
+      pthread_mutex_unlock(&store->lock);
+      return KDB_ERR_DUPLICATE; /* Column already exists */
+    }
+  }
+
+  /* Check if we have room for another column */
+  if (table->num_columns >= KDB_MAX_COLUMNS) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_CONSTRAINT;
+  }
+
+  /* Add the new column */
+  memcpy(&table->columns[table->num_columns], col, sizeof(kdb_column_def_t));
+  table->num_columns++;
+
+  /* Save updated table metadata to disk */
+  page_t table_def_page = {0};
+  table_def_page.header.page_id = 1 + table_idx;
+  table_def_page.header.type = PAGE_TABLE_DEF;
+  memcpy(table_def_page.data, table, sizeof(table_t) - sizeof(btree_t *));
+
+  fseek(store->file, table_def_page.header.page_id * KDB_PAGE_SIZE, SEEK_SET);
+  fwrite(&table_def_page, sizeof(table_def_page), 1, store->file);
+  fflush(store->file);
+
+  pthread_mutex_unlock(&store->lock);
+  return KDB_OK;
+}
+
+/*
  * Serialize value to buffer
  * Returns bytes written
  */
@@ -501,8 +560,13 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
 
   pthread_mutex_lock(&store->lock);
 
-  /* Serialize row */
-  uint8_t row_buf[4096];
+  /* Serialize row - use dynamic allocation for large text fields */
+  size_t row_buf_size = 8 * 1024 * 1024; /* 8MB buffer for large text fields */
+  uint8_t *row_buf = malloc(row_buf_size);
+  if (!row_buf) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
   size_t pos = 0;
 
   int64_t rid = table->next_rowid++;
@@ -519,8 +583,9 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
     }
 
     size_t written =
-        serialize_value(&start_val, row_buf + pos, sizeof(row_buf) - pos);
+        serialize_value(&start_val, row_buf + pos, row_buf_size - pos);
     if (written == 0) {
+      free(row_buf);
       pthread_mutex_unlock(&store->lock);
       return KDB_ERR_IO;
     }
@@ -531,6 +596,7 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
   page_t page;
   fseek(store->file, table->last_data_page * KDB_PAGE_SIZE, SEEK_SET);
   if (fread(&page, sizeof(page), 1, store->file) != 1) {
+    free(row_buf);
     pthread_mutex_unlock(&store->lock);
     return KDB_ERR_IO;
   }
@@ -596,6 +662,7 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
   fwrite(&table_def_page, sizeof(table_def_page), 1, store->file);
   fflush(store->file);
 
+  free(row_buf);
   pthread_mutex_unlock(&store->lock);
   return KDB_OK;
 }

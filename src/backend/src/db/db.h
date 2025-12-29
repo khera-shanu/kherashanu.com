@@ -151,4 +151,7 @@ kdb_value_t kdb_value_real(double r);
 kdb_value_t kdb_value_text(const char *text);
 kdb_value_t kdb_value_null(void);
 
+/* Storage access (for migrations) - returns opaque pointer */
+void *kdb_get_storage(kdb_t *db);
+
 #endif /* KDB_H */

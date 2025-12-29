@@ -80,6 +80,13 @@ kdb_error_t storage_create_table(storage_t *store, const char *name,
 kdb_error_t storage_drop_table(storage_t *store, const char *name);
 table_t *storage_get_table(storage_t *store, const char *name);
 
+/**
+ * Add a column to an existing table (for schema migrations)
+ * Returns KDB_OK if column was added, KDB_ERR_DUPLICATE if it already exists
+ */
+kdb_error_t storage_add_column(storage_t *store, const char *table_name,
+                               const kdb_column_def_t *col);
+
 /* Row operations */
 kdb_error_t storage_insert_row(storage_t *store, table_t *table,
                                const kdb_value_t *values, int num_values,

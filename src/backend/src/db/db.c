@@ -280,3 +280,8 @@ kdb_value_t kdb_value_null(void) {
   val.type = KDB_TYPE_NULL;
   return val;
 }
+
+/*
+ * Get storage handle for migrations
+ */
+void *kdb_get_storage(kdb_t *db) { return db ? db->store : NULL; }

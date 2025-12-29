@@ -3,6 +3,7 @@
  * REST API handlers for Blog + Portfolio platform
  */
 #include "app.h"
+#include "db/storage.h"
 
 #include <curl/curl.h>
 #include <fcntl.h>
@@ -376,6 +377,24 @@ int app_init(const char *db_path, const char *google_secrets_path) {
   if (orm_err != KFM_OK && orm_err != KFM_ERR_DB) {
     fprintf(stderr,
             "Warning: Could not create blog_posts table (may already exist)\n");
+  }
+
+  /* Schema migration: Add missing columns to blog_posts */
+  storage_t *store = (storage_t *)kdb_get_storage(g_app->db);
+  if (store) {
+    kdb_column_def_t category_col = {.name = "category", .type = KDB_TYPE_TEXT};
+    kdb_column_def_t tags_col = {.name = "tags", .type = KDB_TYPE_TEXT};
+    kdb_column_def_t summary_col = {.name = "summary", .type = KDB_TYPE_TEXT};
+
+    if (storage_add_column(store, "blog_posts", &category_col) == KDB_OK) {
+      printf("Migration: Added 'category' column to blog_posts\n");
+    }
+    if (storage_add_column(store, "blog_posts", &tags_col) == KDB_OK) {
+      printf("Migration: Added 'tags' column to blog_posts\n");
+    }
+    if (storage_add_column(store, "blog_posts", &summary_col) == KDB_OK) {
+      printf("Migration: Added 'summary' column to blog_posts\n");
+    }
   }
 
   orm_err = kfm_create_table(g_app->orm, &SESSION_MODEL);
