@@ -18,8 +18,8 @@
 #define KDB_MAX_TABLE_NAME 64
 #define KDB_MAX_COLUMN_NAME 64
 #define KDB_MAX_TABLES 32
-#define KDB_MAX_TEXT_LEN 65536
-#define KDB_PAGE_SIZE 4096
+#define KDB_MAX_TEXT_LEN (8 * 1024 * 1024) /* 8MB max text length */
+#define KDB_PAGE_SIZE (8 * 1024 * 1024)    /* 8MB page size for large content */
 
 /* Error codes */
 typedef enum {

@@ -1,5 +1,6 @@
 /**
  * Storage Layer Implementation - Page-based Persistent Storage
+ * Optimized for large pages (up to 8MB) with heap allocation
  */
 #include "storage.h"
 #include <errno.h>
@@ -8,7 +9,7 @@
 #include <strings.h>
 #include <unistd.h>
 
-/* File header (first page) */
+/* File header (first page) - must fit in any page size */
 typedef struct {
   char magic[8]; /* "KDBFILE" */
   uint32_t version;
@@ -16,17 +17,29 @@ typedef struct {
   uint32_t num_pages;
   uint32_t num_tables;
   uint32_t free_page_head;
-  uint8_t reserved[KDB_PAGE_SIZE - 28];
+  uint8_t reserved[4096 - 28]; /* Fixed size header area */
 } file_header_t;
 
 static const char FILE_MAGIC[] = "KDBFILE";
-static const uint32_t FILE_VERSION = 1;
+static const uint32_t FILE_VERSION = 2; /* Bumped version for new format */
 
-/* Row format in page:
- * [2 bytes: row size][8 bytes: rowid][values...]
+/* Row format in page (updated for large rows):
+ * [4 bytes: row size][8 bytes: rowid][values...]
  * Value format:
  * [1 byte: type][data based on type]
  */
+#define ROW_SIZE_BYTES 4
+#define ROW_ID_BYTES 8
+#define ROW_HEADER_BYTES (ROW_SIZE_BYTES + ROW_ID_BYTES)
+
+/* Helper to allocate a page on heap */
+static page_t *page_alloc(void) {
+  page_t *p = calloc(1, sizeof(page_t));
+  return p;
+}
+
+/* Helper to free a heap-allocated page */
+static void page_free(page_t *p) { free(p); }
 
 /*
  * Open or create storage file
@@ -42,7 +55,7 @@ kdb_error_t storage_open(const char *path, storage_t **store) {
   /* Try to open existing file */
   s->file = fopen(path, "r+b");
   if (s->file) {
-    /* Read header */
+    /* Read header - only need to read the fixed header portion */
     file_header_t hdr;
     if (fread(&hdr, sizeof(hdr), 1, s->file) != 1) {
       fclose(s->file);
@@ -61,26 +74,34 @@ kdb_error_t storage_open(const char *path, storage_t **store) {
     s->free_page_head = hdr.free_page_head;
 
     /* Load table definitions */
+    page_t *page = page_alloc();
+    if (!page) {
+      fclose(s->file);
+      free(s);
+      return KDB_ERR_NOMEM;
+    }
+
     for (int i = 0; i < (int)s->num_tables; i++) {
-      page_t page;
       fseek(s->file, (1 + i) * KDB_PAGE_SIZE, SEEK_SET);
-      if (fread(&page, sizeof(page), 1, s->file) != 1) {
+      if (fread(page, sizeof(page_t), 1, s->file) != 1) {
+        page_free(page);
         fclose(s->file);
         free(s);
         return KDB_ERR_IO;
       }
 
-      if (page.header.type != PAGE_TABLE_DEF)
+      if (page->header.type != PAGE_TABLE_DEF)
         continue;
 
       table_t *t = &s->tables[i];
-      memcpy(t, page.data, sizeof(table_t) - sizeof(btree_t *));
+      memcpy(t, page->data, sizeof(table_t) - sizeof(btree_t *));
 
       /* Rebuild primary key index */
       if (t->pk_column >= 0) {
         t->pk_index = btree_create(true);
       }
     }
+    page_free(page);
 
     /* Rebuild indices from data */
     storage_rebuild_indices(s);
@@ -92,20 +113,29 @@ kdb_error_t storage_open(const char *path, storage_t **store) {
       return KDB_ERR_IO;
     }
 
-    /* Write header */
-    file_header_t hdr = {0};
-    memcpy(hdr.magic, FILE_MAGIC, 7);
-    hdr.version = FILE_VERSION;
-    hdr.page_size = KDB_PAGE_SIZE;
-    hdr.num_pages = 1;
-    hdr.num_tables = 0;
-    hdr.free_page_head = 0;
+    /* Write header using heap-allocated page to avoid stack overflow */
+    page_t *header_page = page_alloc();
+    if (!header_page) {
+      fclose(s->file);
+      free(s);
+      return KDB_ERR_NOMEM;
+    }
 
-    if (fwrite(&hdr, KDB_PAGE_SIZE, 1, s->file) != 1) {
+    file_header_t *hdr = (file_header_t *)header_page;
+    memcpy(hdr->magic, FILE_MAGIC, 7);
+    hdr->version = FILE_VERSION;
+    hdr->page_size = KDB_PAGE_SIZE;
+    hdr->num_pages = 1;
+    hdr->num_tables = 0;
+    hdr->free_page_head = 0;
+
+    if (fwrite(header_page, KDB_PAGE_SIZE, 1, s->file) != 1) {
+      page_free(header_page);
       fclose(s->file);
       free(s);
       return KDB_ERR_IO;
     }
+    page_free(header_page);
 
     s->num_pages =
         1 + KDB_MAX_TABLES; /* Reserve pages for header + table defs */
@@ -121,18 +151,26 @@ kdb_error_t storage_open(const char *path, storage_t **store) {
  * Sync header to disk
  */
 static kdb_error_t sync_header(storage_t *store) {
-  file_header_t hdr = {0};
-  memcpy(hdr.magic, FILE_MAGIC, 7);
-  hdr.version = FILE_VERSION;
-  hdr.page_size = KDB_PAGE_SIZE;
-  hdr.num_pages = store->num_pages;
-  hdr.num_tables = store->num_tables;
-  hdr.free_page_head = store->free_page_head;
+  /* Use heap-allocated page for header write to avoid stack overflow */
+  page_t *header_page = page_alloc();
+  if (!header_page) {
+    return KDB_ERR_NOMEM;
+  }
+
+  file_header_t *hdr = (file_header_t *)header_page;
+  memcpy(hdr->magic, FILE_MAGIC, 7);
+  hdr->version = FILE_VERSION;
+  hdr->page_size = KDB_PAGE_SIZE;
+  hdr->num_pages = store->num_pages;
+  hdr->num_tables = store->num_tables;
+  hdr->free_page_head = store->free_page_head;
 
   fseek(store->file, 0, SEEK_SET);
-  if (fwrite(&hdr, KDB_PAGE_SIZE, 1, store->file) != 1) {
+  if (fwrite(header_page, KDB_PAGE_SIZE, 1, store->file) != 1) {
+    page_free(header_page);
     return KDB_ERR_IO;
   }
+  page_free(header_page);
   return KDB_OK;
 }
 
@@ -146,20 +184,24 @@ void storage_close(storage_t *store) {
   pthread_mutex_lock(&store->lock);
 
   /* Save all table metadata */
-  for (int i = 0; i < store->num_tables; i++) {
-    table_t *t = &store->tables[i];
+  page_t *page = page_alloc();
+  if (page) {
+    for (int i = 0; i < store->num_tables; i++) {
+      table_t *t = &store->tables[i];
 
-    page_t page = {0};
-    page.header.page_id = 1 + i;
-    page.header.type = PAGE_TABLE_DEF;
-    memcpy(page.data, t, sizeof(table_t) - sizeof(btree_t *));
+      memset(page, 0, sizeof(page_t));
+      page->header.page_id = 1 + i;
+      page->header.type = PAGE_TABLE_DEF;
+      memcpy(page->data, t, sizeof(table_t) - sizeof(btree_t *));
 
-    fseek(store->file, page.header.page_id * KDB_PAGE_SIZE, SEEK_SET);
-    fwrite(&page, sizeof(page), 1, store->file);
+      fseek(store->file, page->header.page_id * KDB_PAGE_SIZE, SEEK_SET);
+      fwrite(page, sizeof(page_t), 1, store->file);
 
-    if (t->pk_index) {
-      btree_destroy(t->pk_index);
+      if (t->pk_index) {
+        btree_destroy(t->pk_index);
+      }
     }
+    page_free(page);
   }
 
   sync_header(store);
@@ -181,17 +223,24 @@ kdb_error_t storage_sync(storage_t *store) {
   pthread_mutex_lock(&store->lock);
 
   /* Save table metadata */
+  page_t *page = page_alloc();
+  if (!page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+
   for (int i = 0; i < store->num_tables; i++) {
     table_t *t = &store->tables[i];
 
-    page_t page = {0};
-    page.header.page_id = 1 + i;
-    page.header.type = PAGE_TABLE_DEF;
-    memcpy(page.data, t, sizeof(table_t) - sizeof(btree_t *));
+    memset(page, 0, sizeof(page_t));
+    page->header.page_id = 1 + i;
+    page->header.type = PAGE_TABLE_DEF;
+    memcpy(page->data, t, sizeof(table_t) - sizeof(btree_t *));
 
-    fseek(store->file, page.header.page_id * KDB_PAGE_SIZE, SEEK_SET);
-    fwrite(&page, sizeof(page), 1, store->file);
+    fseek(store->file, page->header.page_id * KDB_PAGE_SIZE, SEEK_SET);
+    fwrite(page, sizeof(page_t), 1, store->file);
   }
+  page_free(page);
 
   kdb_error_t err = sync_header(store);
   fflush(store->file);
@@ -210,20 +259,26 @@ static uint32_t alloc_page(storage_t *store) {
     /* Reuse from free list */
     page_id = store->free_page_head;
 
-    page_t page;
-    fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    if (fread(&page, sizeof(page), 1, store->file) == 1) {
-      store->free_page_head = page.header.next_page;
+    page_t *page = page_alloc();
+    if (page) {
+      fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
+      if (fread(page, sizeof(page_t), 1, store->file) == 1) {
+        store->free_page_head = page->header.next_page;
+      }
+      page_free(page);
     }
   } else {
     /* Allocate new page at end */
     page_id = store->num_pages++;
 
     /* Extend file */
-    page_t empty = {0};
-    empty.header.page_id = page_id;
-    fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    fwrite(&empty, sizeof(empty), 1, store->file);
+    page_t *empty = page_alloc();
+    if (empty) {
+      empty->header.page_id = page_id;
+      fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
+      fwrite(empty, sizeof(page_t), 1, store->file);
+      page_free(empty);
+    }
   }
 
   return page_id;
@@ -270,13 +325,18 @@ kdb_error_t storage_create_table(storage_t *store, const char *name,
   t->row_count = 0;
 
   /* Initialize data page */
-  page_t page = {0};
-  page.header.page_id = t->first_data_page;
-  page.header.type = PAGE_DATA;
-  page.header.free_space = sizeof(page.data);
+  page_t *page = page_alloc();
+  if (!page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+  page->header.page_id = t->first_data_page;
+  page->header.type = PAGE_DATA;
+  page->header.free_space = sizeof(page->data);
   fseek(store->file, t->first_data_page * KDB_PAGE_SIZE, SEEK_SET);
-  fwrite(&page, sizeof(page), 1, store->file);
+  fwrite(page, sizeof(page_t), 1, store->file);
   fflush(store->file);
+  page_free(page);
 
   /* Create primary key index */
   if (t->pk_column >= 0) {
@@ -317,22 +377,25 @@ kdb_error_t storage_drop_table(storage_t *store, const char *name) {
 
   /* Free data pages */
   uint32_t page_id = t->first_data_page;
-  while (page_id) {
-    page_t page;
-    fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    if (fread(&page, sizeof(page), 1, store->file) != 1)
-      break;
+  page_t *page = page_alloc();
+  if (page) {
+    while (page_id) {
+      fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
+      if (fread(page, sizeof(page_t), 1, store->file) != 1)
+        break;
 
-    uint32_t next = page.header.next_page;
+      uint32_t next = page->header.next_page;
 
-    /* Add to free list */
-    page.header.type = PAGE_FREE;
-    page.header.next_page = store->free_page_head;
-    fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    fwrite(&page, sizeof(page), 1, store->file);
-    store->free_page_head = page_id;
+      /* Add to free list */
+      page->header.type = PAGE_FREE;
+      page->header.next_page = store->free_page_head;
+      fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
+      fwrite(page, sizeof(page_t), 1, store->file);
+      store->free_page_head = page_id;
 
-    page_id = next;
+      page_id = next;
+    }
+    page_free(page);
   }
 
   /* Free index */
@@ -413,14 +476,19 @@ kdb_error_t storage_add_column(storage_t *store, const char *table_name,
   table->num_columns++;
 
   /* Save updated table metadata to disk */
-  page_t table_def_page = {0};
-  table_def_page.header.page_id = 1 + table_idx;
-  table_def_page.header.type = PAGE_TABLE_DEF;
-  memcpy(table_def_page.data, table, sizeof(table_t) - sizeof(btree_t *));
+  page_t *table_def_page = page_alloc();
+  if (!table_def_page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+  table_def_page->header.page_id = 1 + table_idx;
+  table_def_page->header.type = PAGE_TABLE_DEF;
+  memcpy(table_def_page->data, table, sizeof(table_t) - sizeof(btree_t *));
 
-  fseek(store->file, table_def_page.header.page_id * KDB_PAGE_SIZE, SEEK_SET);
-  fwrite(&table_def_page, sizeof(table_def_page), 1, store->file);
+  fseek(store->file, table_def_page->header.page_id * KDB_PAGE_SIZE, SEEK_SET);
+  fwrite(table_def_page, sizeof(page_t), 1, store->file);
   fflush(store->file);
+  page_free(table_def_page);
 
   pthread_mutex_unlock(&store->lock);
   return KDB_OK;
@@ -593,43 +661,51 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
   }
 
   /* Find page with space */
-  page_t page;
+  page_t *page = page_alloc();
+  if (!page) {
+    free(row_buf);
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+
   fseek(store->file, table->last_data_page * KDB_PAGE_SIZE, SEEK_SET);
-  if (fread(&page, sizeof(page), 1, store->file) != 1) {
+  if (fread(page, sizeof(page_t), 1, store->file) != 1) {
+    page_free(page);
     free(row_buf);
     pthread_mutex_unlock(&store->lock);
     return KDB_ERR_IO;
   }
 
-  size_t row_size = 2 + 8 + pos; /* size + rowid + data */
+  size_t row_size =
+      ROW_HEADER_BYTES + pos; /* 4 bytes size + 8 bytes rowid + data */
 
-  if (page.header.free_space < row_size) {
+  if (page->header.free_space < row_size) {
     /* Allocate new page */
     uint32_t new_page = alloc_page(store);
-    page.header.next_page = new_page;
+    page->header.next_page = new_page;
     fseek(store->file, table->last_data_page * KDB_PAGE_SIZE, SEEK_SET);
-    fwrite(&page, sizeof(page), 1, store->file);
+    fwrite(page, sizeof(page_t), 1, store->file);
 
     table->last_data_page = new_page;
 
-    memset(&page, 0, sizeof(page));
-    page.header.page_id = new_page;
-    page.header.type = PAGE_DATA;
-    page.header.free_space = sizeof(page.data);
+    memset(page, 0, sizeof(page_t));
+    page->header.page_id = new_page;
+    page->header.type = PAGE_DATA;
+    page->header.free_space = sizeof(page->data);
   }
 
-  /* Write row to page */
-  size_t offset = sizeof(page.data) - page.header.free_space;
-  uint16_t size16 = (uint16_t)pos;
-  memcpy(page.data + offset, &size16, 2);
-  memcpy(page.data + offset + 2, &rid, 8);
-  memcpy(page.data + offset + 10, row_buf, pos);
+  /* Write row to page - using 4-byte size field for large rows */
+  size_t offset = sizeof(page->data) - page->header.free_space;
+  uint32_t size32 = (uint32_t)pos;
+  memcpy(page->data + offset, &size32, ROW_SIZE_BYTES);
+  memcpy(page->data + offset + ROW_SIZE_BYTES, &rid, ROW_ID_BYTES);
+  memcpy(page->data + offset + ROW_HEADER_BYTES, row_buf, pos);
 
-  page.header.free_space -= row_size;
-  page.header.num_records++;
+  page->header.free_space -= row_size;
+  page->header.num_records++;
 
   fseek(store->file, table->last_data_page * KDB_PAGE_SIZE, SEEK_SET);
-  fwrite(&page, sizeof(page), 1, store->file);
+  fwrite(page, sizeof(page_t), 1, store->file);
   fflush(store->file);
 
   /* Update index */
@@ -652,16 +728,21 @@ kdb_error_t storage_insert_row(storage_t *store, table_t *table,
     *rowid = rid;
 
   /* Save/Sync Metadata (row count, next_rowid, page pointers) */
-  page_t table_def_page = {0};
-  table_def_page.header.page_id =
-      1 + (table - store->tables); /* Pointer arithmetic to find index */
-  table_def_page.header.type = PAGE_TABLE_DEF;
-  memcpy(table_def_page.data, table, sizeof(table_t) - sizeof(btree_t *));
+  page_t *table_def_page = page_alloc();
+  if (table_def_page) {
+    table_def_page->header.page_id =
+        1 + (table - store->tables); /* Pointer arithmetic to find index */
+    table_def_page->header.type = PAGE_TABLE_DEF;
+    memcpy(table_def_page->data, table, sizeof(table_t) - sizeof(btree_t *));
 
-  fseek(store->file, table_def_page.header.page_id * KDB_PAGE_SIZE, SEEK_SET);
-  fwrite(&table_def_page, sizeof(table_def_page), 1, store->file);
-  fflush(store->file);
+    fseek(store->file, table_def_page->header.page_id * KDB_PAGE_SIZE,
+          SEEK_SET);
+    fwrite(table_def_page, sizeof(page_t), 1, store->file);
+    fflush(store->file);
+    page_free(table_def_page);
+  }
 
+  page_free(page);
   free(row_buf);
   pthread_mutex_unlock(&store->lock);
   return KDB_OK;
@@ -679,44 +760,52 @@ kdb_error_t storage_get_row(storage_t *store, table_t *table, int64_t rowid,
 
   uint32_t page_id = table->first_data_page;
 
+  page_t *page = page_alloc();
+  if (!page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+
   while (page_id) {
-    page_t page;
     fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    if (fread(&page, sizeof(page), 1, store->file) != 1)
+    if (fread(page, sizeof(page_t), 1, store->file) != 1)
       break;
 
     /* Scan rows in page */
     size_t offset = 0;
-    for (uint32_t i = 0; i < page.header.num_records; i++) {
-      uint16_t size;
+    for (uint32_t i = 0; i < page->header.num_records; i++) {
+      uint32_t size;
       int64_t rid;
-      memcpy(&size, page.data + offset, 2);
-      memcpy(&rid, page.data + offset + 2, 8);
+      memcpy(&size, page->data + offset, ROW_SIZE_BYTES);
+      memcpy(&rid, page->data + offset + ROW_SIZE_BYTES, ROW_ID_BYTES);
 
       if (rid == rowid) {
         /* Found it! Deserialize values */
         row->num_values = table->num_columns;
         row->values = calloc(row->num_values, sizeof(kdb_value_t));
 
-        size_t pos = offset + 10;
+        size_t pos = offset + ROW_HEADER_BYTES;
         for (int j = 0; j < row->num_values; j++) {
           size_t read = deserialize_value(
-              page.data + pos, size - (pos - offset - 10), &row->values[j]);
+              page->data + pos, size - (pos - offset - ROW_HEADER_BYTES),
+              &row->values[j]);
           if (read == 0)
             break;
           pos += read;
         }
 
+        page_free(page);
         pthread_mutex_unlock(&store->lock);
         return KDB_OK;
       }
 
-      offset += 2 + 8 + size;
+      offset += ROW_HEADER_BYTES + size;
     }
 
-    page_id = page.header.next_page;
+    page_id = page->header.next_page;
   }
 
+  page_free(page);
   pthread_mutex_unlock(&store->lock);
   return KDB_ERR_NO_TABLE; /* Row not found */
 }
@@ -733,38 +822,44 @@ kdb_error_t storage_delete_row(storage_t *store, table_t *table,
 
   uint32_t page_id = table->first_data_page;
 
+  page_t *page = page_alloc();
+  if (!page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
+
   while (page_id) {
-    page_t page;
     fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-    if (fread(&page, sizeof(page), 1, store->file) != 1)
+    if (fread(page, sizeof(page_t), 1, store->file) != 1)
       break;
 
     /* Scan rows in page */
     size_t offset = 0;
-    for (uint32_t i = 0; i < page.header.num_records; i++) {
-      uint16_t size;
+    for (uint32_t i = 0; i < page->header.num_records; i++) {
+      uint32_t size;
       int64_t rid;
-      memcpy(&size, page.data + offset, 2);
-      memcpy(&rid, page.data + offset + 2, 8);
+      memcpy(&size, page->data + offset, ROW_SIZE_BYTES);
+      memcpy(&rid, page->data + offset + ROW_SIZE_BYTES, ROW_ID_BYTES);
 
       if (rid == rowid) {
         /* Mark as deleted (set rowid to -1) */
         rid = -1;
 
-        memcpy(page.data + offset + 2, &rid, 8);
+        memcpy(page->data + offset + ROW_SIZE_BYTES, &rid, ROW_ID_BYTES);
 
         fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-        fwrite(&page, sizeof(page), 1, store->file);
+        fwrite(page, sizeof(page_t), 1, store->file);
         fflush(store->file);
 
         /* Remove from index */
         if (table->pk_index) {
           kdb_value_t *values = calloc(table->num_columns, sizeof(kdb_value_t));
           if (values) {
-            size_t pos = offset + 10;
+            size_t pos = offset + ROW_HEADER_BYTES;
             for (int j = 0; j < table->num_columns; j++) {
               size_t read = deserialize_value(
-                  page.data + pos, size - (pos - offset - 10), &values[j]);
+                  page->data + pos, size - (pos - offset - ROW_HEADER_BYTES),
+                  &values[j]);
               if (read == 0)
                 break;
               pos += read;
@@ -800,32 +895,38 @@ kdb_error_t storage_delete_row(storage_t *store, table_t *table,
         table->row_count--;
 
         /* Save/Sync Metadata (row count) */
-        page_t table_def_page = {0};
-        table_def_page.header.page_id = 1 + (table - store->tables);
-        table_def_page.header.type = PAGE_TABLE_DEF;
-        memcpy(table_def_page.data, table, sizeof(table_t) - sizeof(btree_t *));
+        page_t *table_def_page = page_alloc();
+        if (table_def_page) {
+          table_def_page->header.page_id = 1 + (table - store->tables);
+          table_def_page->header.type = PAGE_TABLE_DEF;
+          memcpy(table_def_page->data, table,
+                 sizeof(table_t) - sizeof(btree_t *));
 
-        fseek(store->file, table_def_page.header.page_id * KDB_PAGE_SIZE,
-              SEEK_SET);
-        fwrite(&table_def_page, sizeof(table_def_page), 1, store->file);
-        fflush(store->file);
+          fseek(store->file, table_def_page->header.page_id * KDB_PAGE_SIZE,
+                SEEK_SET);
+          fwrite(table_def_page, sizeof(page_t), 1, store->file);
+          fflush(store->file);
+          page_free(table_def_page);
+        }
 
+        page_free(page);
         pthread_mutex_unlock(&store->lock);
         return KDB_OK;
       }
 
-      offset += 2 + 8 + size;
+      offset += ROW_HEADER_BYTES + size;
     }
 
-    page_id = page.header.next_page;
+    page_id = page->header.next_page;
   }
 
+  page_free(page);
   pthread_mutex_unlock(&store->lock);
   return KDB_ERR_NO_TABLE;
 }
 
 /*
- * Cursor for iteration
+ * Cursor for iteration - uses pointer to heap-allocated page
  */
 struct storage_cursor_s {
   storage_t *store;
@@ -833,7 +934,7 @@ struct storage_cursor_s {
   uint32_t page_id;
   uint32_t record_idx;
   size_t offset;
-  page_t page;
+  page_t *page; /* Heap-allocated page buffer */
 };
 
 storage_cursor_t *storage_cursor_create(storage_t *store, table_t *table) {
@@ -843,6 +944,12 @@ storage_cursor_t *storage_cursor_create(storage_t *store, table_t *table) {
   storage_cursor_t *cur = calloc(1, sizeof(storage_cursor_t));
   if (!cur)
     return NULL;
+
+  cur->page = page_alloc();
+  if (!cur->page) {
+    free(cur);
+    return NULL;
+  }
 
   cur->store = store;
   cur->table = table;
@@ -854,7 +961,7 @@ storage_cursor_t *storage_cursor_create(storage_t *store, table_t *table) {
   pthread_mutex_lock(&store->lock);
   if (cur->page_id) {
     fseek(store->file, cur->page_id * KDB_PAGE_SIZE, SEEK_SET);
-    fread(&cur->page, sizeof(page_t), 1, store->file);
+    fread(cur->page, sizeof(page_t), 1, store->file);
   }
   pthread_mutex_unlock(&store->lock);
 
@@ -863,18 +970,19 @@ storage_cursor_t *storage_cursor_create(storage_t *store, table_t *table) {
 
 bool storage_cursor_next(storage_cursor_t *cursor, int64_t *rowid,
                          kdb_row_t *row) {
-  if (!cursor || !cursor->page_id)
+  if (!cursor || !cursor->page_id || !cursor->page)
     return false;
 
   pthread_mutex_lock(&cursor->store->lock);
 
   while (cursor->page_id) {
     /* Skip deleted rows / find next valid row */
-    while (cursor->record_idx < cursor->page.header.num_records) {
-      uint16_t size;
+    while (cursor->record_idx < cursor->page->header.num_records) {
+      uint32_t size;
       int64_t rid;
-      memcpy(&size, cursor->page.data + cursor->offset, 2);
-      memcpy(&rid, cursor->page.data + cursor->offset + 2, 8);
+      memcpy(&size, cursor->page->data + cursor->offset, ROW_SIZE_BYTES);
+      memcpy(&rid, cursor->page->data + cursor->offset + ROW_SIZE_BYTES,
+             ROW_ID_BYTES);
 
       if (rid != -1) {
         /* Valid row */
@@ -885,11 +993,12 @@ bool storage_cursor_next(storage_cursor_t *cursor, int64_t *rowid,
           row->num_values = cursor->table->num_columns;
           row->values = calloc(row->num_values, sizeof(kdb_value_t));
 
-          size_t pos = cursor->offset + 10;
+          size_t pos = cursor->offset + ROW_HEADER_BYTES;
           for (int j = 0; j < row->num_values; j++) {
-            size_t read = deserialize_value(cursor->page.data + pos,
-                                            size - (pos - cursor->offset - 10),
-                                            &row->values[j]);
+            size_t read = deserialize_value(
+                cursor->page->data + pos,
+                size - (pos - cursor->offset - ROW_HEADER_BYTES),
+                &row->values[j]);
             if (read == 0)
               break;
             pos += read;
@@ -897,22 +1006,22 @@ bool storage_cursor_next(storage_cursor_t *cursor, int64_t *rowid,
         }
 
         /* Advance cursor */
-        cursor->offset += 2 + 8 + size;
+        cursor->offset += ROW_HEADER_BYTES + size;
         cursor->record_idx++;
 
         pthread_mutex_unlock(&cursor->store->lock);
         return true;
       }
 
-      cursor->offset += 2 + 8 + size;
+      cursor->offset += ROW_HEADER_BYTES + size;
       cursor->record_idx++;
     }
 
     /* Move to next page */
-    cursor->page_id = cursor->page.header.next_page;
+    cursor->page_id = cursor->page->header.next_page;
     if (cursor->page_id) {
       fseek(cursor->store->file, cursor->page_id * KDB_PAGE_SIZE, SEEK_SET);
-      fread(&cursor->page, sizeof(page_t), 1, cursor->store->file);
+      fread(cursor->page, sizeof(page_t), 1, cursor->store->file);
       cursor->record_idx = 0;
       cursor->offset = 0;
     }
@@ -922,7 +1031,12 @@ bool storage_cursor_next(storage_cursor_t *cursor, int64_t *rowid,
   return false;
 }
 
-void storage_cursor_destroy(storage_cursor_t *cursor) { free(cursor); }
+void storage_cursor_destroy(storage_cursor_t *cursor) {
+  if (cursor) {
+    page_free(cursor->page);
+    free(cursor);
+  }
+}
 
 /*
  * Update a row (simplified - deletes and reinserts)
@@ -936,6 +1050,7 @@ kdb_error_t storage_update_row(storage_t *store, table_t *table, int64_t rowid,
   /* For simplicity, update is delete + insert in the query layer */
   return KDB_OK;
 }
+
 /*
  * Rebuild indices from data pages
  */
@@ -945,6 +1060,12 @@ kdb_error_t storage_rebuild_indices(storage_t *store) {
 
   pthread_mutex_lock(&store->lock);
   printf("Rebuilding indices for %d tables...\n", store->num_tables);
+
+  page_t *page = page_alloc();
+  if (!page) {
+    pthread_mutex_unlock(&store->lock);
+    return KDB_ERR_NOMEM;
+  }
 
   for (int i = 0; i < store->num_tables; i++) {
     table_t *t = &store->tables[i];
@@ -966,30 +1087,30 @@ kdb_error_t storage_rebuild_indices(storage_t *store) {
     int count = 0;
 
     while (page_id) {
-      page_t page;
       fseek(store->file, page_id * KDB_PAGE_SIZE, SEEK_SET);
-      if (fread(&page, sizeof(page), 1, store->file) != 1)
+      if (fread(page, sizeof(page_t), 1, store->file) != 1)
         break;
 
       /* Scan rows in page */
       size_t offset = 0;
-      for (uint32_t j = 0; j < page.header.num_records; j++) {
-        uint16_t size;
+      for (uint32_t j = 0; j < page->header.num_records; j++) {
+        uint32_t size;
         int64_t rid;
-        memcpy(&size, page.data + offset, 2);
-        memcpy(&rid, page.data + offset + 2, 8);
+        memcpy(&size, page->data + offset, ROW_SIZE_BYTES);
+        memcpy(&rid, page->data + offset + ROW_SIZE_BYTES, ROW_ID_BYTES);
 
         if (rid != -1) { /* Skip deleted rows */
           /* We need to extract the PK value.
              This requires parsing the row data up to the PK column. */
 
           /* Parse values */
-          size_t pos = offset + 10;
+          size_t pos = offset + ROW_HEADER_BYTES;
           kdb_value_t *values = calloc(t->num_columns, sizeof(kdb_value_t));
           if (values) {
             for (int k = 0; k < t->num_columns; k++) {
               size_t read = deserialize_value(
-                  page.data + pos, size - (pos - offset - 10), &values[k]);
+                  page->data + pos, size - (pos - offset - ROW_HEADER_BYTES),
+                  &values[k]);
               if (read == 0)
                 break;
               pos += read;
@@ -1027,14 +1148,15 @@ kdb_error_t storage_rebuild_indices(storage_t *store) {
           }
         }
 
-        offset += 2 + 8 + size;
+        offset += ROW_HEADER_BYTES + size;
       }
 
-      page_id = page.header.next_page;
+      page_id = page->header.next_page;
     }
     printf("    Indexed %d rows for table '%s'\n", count, t->name);
   }
 
+  page_free(page);
   pthread_mutex_unlock(&store->lock);
   return KDB_OK;
 }
