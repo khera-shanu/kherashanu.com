@@ -7,7 +7,8 @@
 #include <time.h>
 
 #define MAX_CONNECTIONS 1024
-#define READ_BUFFER_SIZE 8192
+#define READ_BUFFER_SIZE                                                       \
+  (8 * 1024 * 1024) /* 8MB - enough for large blog posts */
 #define WEBROOT_PATH_MAX 512
 
 typedef struct {
