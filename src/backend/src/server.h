@@ -32,8 +32,8 @@ typedef struct {
   SSL *ssl;
   bool is_tls;
 
-  // Request reading
-  char read_buffer[READ_BUFFER_SIZE];
+  // Request reading (dynamically allocated to avoid huge .bss)
+  char *read_buffer;
   size_t read_pos;
 
   // Response writing

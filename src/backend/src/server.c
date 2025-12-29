@@ -90,6 +90,11 @@ static void close_connection(int index) {
     conn->write_buffer = NULL;
   }
 
+  if (conn->read_buffer) {
+    free(conn->read_buffer);
+    conn->read_buffer = NULL;
+  }
+
   conn->fd = -1;
   conn->state = CONN_STATE_NONE;
 }
@@ -121,6 +126,12 @@ static int add_connection(int fd, bool is_tls) {
   conn->is_tls = is_tls;
   conn->ssl = is_tls ? tls_wrap_socket(fd) : NULL;
   conn->state = CONN_STATE_READING_REQUEST;
+  conn->read_buffer = malloc(READ_BUFFER_SIZE);
+  if (!conn->read_buffer) {
+    close(fd);
+    conn->state = CONN_STATE_NONE;
+    return -1;
+  }
   conn->read_pos = 0;
   conn->write_buffer = NULL;
   conn->write_len = 0;
