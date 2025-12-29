@@ -1,3 +1,5 @@
+.env
+google_oauth_secrets.json
 certbot/
 
 # Global
