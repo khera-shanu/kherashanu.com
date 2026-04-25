@@ -1,4 +1,0 @@
-# Ignore Docker-related files
-Dockerfile
-.dockerignore
-DOCKER.md
